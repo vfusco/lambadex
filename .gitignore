@@ -1,3 +1,7 @@
+# Sunodo files and directories
+.sunodo
+dapp
+
 # Prerequisites
 *.d
 
