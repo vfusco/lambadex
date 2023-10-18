@@ -1,0 +1,2 @@
+image:
+	docker buildx bake

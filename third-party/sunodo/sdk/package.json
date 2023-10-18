@@ -1,0 +1,8 @@
+{
+    "name": "@sunodo/sdk",
+    "private": true,
+    "version": "0.2.0-lambadex",
+    "scripts": {
+        "build": "docker buildx bake --load"
+    }
+}
