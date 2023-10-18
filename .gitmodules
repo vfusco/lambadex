@@ -1,0 +1,3 @@
+[submodule "third-party/cartesi/machine-emulator"]
+	path = third-party/cartesi/machine-emulator
+	url = git@github.com:cartesi/machine-emulator.git
