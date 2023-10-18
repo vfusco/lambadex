@@ -1,3 +1,6 @@
 [submodule "third-party/cartesi/machine-emulator"]
 	path = third-party/cartesi/machine-emulator
 	url = git@github.com:cartesi/machine-emulator.git
+[submodule "third-party/cartesi/server-manager"]
+	path = third-party/cartesi/server-manager
+	url = git@github.com:cartesi/server-manager.git
