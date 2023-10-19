@@ -21,6 +21,7 @@ class lambda_state {
     int m_fd;    
     uint64_t m_length = 0;    
     void *m_state;
+
 public:
     lambda_state(const char *file_name) {
         m_length = std::filesystem::file_size(file_name);
@@ -65,7 +66,7 @@ public:
 
 /// start of custom allocator stuff
 
-class  memory_arena {
+class memory_arena {
     uint64_t m_length;
     uint64_t m_next_free;
     unsigned char m_data[0];
@@ -123,28 +124,40 @@ enum class exec_type : char {
 };
 using contract_address_type = std::string;
 
-// Accepted tokens and instruments
+// Supported tokens
 static std::map<token_type, contract_address_type> tokens {
     {{"brl"}, {"0x0000000000000000000"}},
     {{"usd"}, {"0x0000000000000000000"}},
     {{"ctsi"}, {"0x0000000000000000000"}},
     {{"usdc"}, {"0x0000000000000000000"}}
 };
+
+// Trading instrument
 struct instrument {
     token_type base;    // token being traded
-    token_type quote;   // quote token
+    token_type quote;   // quote token - "price " of 1 base token
 };
+ 
+
+ // Supported instruments
  static std::map<token_type, instrument>  instruments  {
      {symbol_type{"ctsi/usdc"}, {{"ctsi"}, {"usdc"}}},
+     {symbol_type{"usdc/ctsi"}, {{"usdc"}, {"ctsi"}}},
+     {symbol_type{"brl/usd"}, {{"blr"}, {"usd"}}},
+     {symbol_type{"usd/brl"}, {{"usd"}, {"brl"}}},
+     {symbol_type{"ctsi/brl"}, {{"ctsi"}, {"brl"}}},
+     {symbol_type{"brl/ctsi"}, {{"brl"}, {"ctsi"}}},
  };
 
+
+//  Token exchange order
 struct order {
-    id_type id;
-    trader_type trader;
-    symbol_type symbol;
-    side side;
-    currency_type price;    // limit price 
-    qty_type qty;        // remaining quantity
+    id_type id;             // order id provided by the exchange
+    trader_type trader;     // trader id
+    symbol_type symbol;     // instrument's symbol (ticker)
+    side side;              // buy or sell
+    currency_type price;    // limit price in instrument.quote
+    qty_type qty;           // remaining quantity
     
     bool matches(const order& other) {
         return (side == side::buy && price >= other.price) || (side == side::sell && price <= other.price);
@@ -190,17 +203,12 @@ struct execution_report {
 };
 using execution_reports_type = std::vector<execution_report>;
 
+using wallet_type = std::map<token_type, currency_type, std::less<token_type>, arena_allocator<std::pair<const token_type, currency_type>>>;
+using books_type = std::map<symbol_type, book, std::less<symbol_type>, arena_allocator<std::pair<const symbol_type, book>>>;
+using wallets_type = std::map<trader_type, wallet_type, std::less<trader_type>, arena_allocator<std::pair<const trader_type, wallet_type>>>;    
+
 // exchange class to be "deserialized" from lambda state
 class exchange {
-public:
-    using wallet_type = std::map<token_type, currency_type, std::less<token_type>, arena_allocator<std::pair<const token_type, currency_type>>>;
-
-private:
-    using orders_type = std::map<id_type, order*, std::less<id_type>, arena_allocator<std::pair<const id_type, order*>>>;
-    using books_type = std::map<symbol_type, book, std::less<symbol_type>, arena_allocator<std::pair<const symbol_type, book>>>;
-    using wallets_type = std::map<trader_type, wallet_type, std::less<trader_type>, arena_allocator<std::pair<const trader_type, wallet_type>>>;    
-
-    orders_type orders;
     books_type books;
     wallets_type wallets;
     id_type next_id{0};
@@ -229,9 +237,9 @@ public:
                 return;
             }
             subtract_from_balance(o.trader, instrument->second.base, size);
-        }
+        }        
+        
         // send report acknowledging new order
-        o.id = get_next_id();
         reports.push_back({o.trader, o.id, exec_type::new_order, o.side, o.qty, o.price});
         // match against existing orders
         auto &book = find_or_create_book(o.symbol);
@@ -248,7 +256,8 @@ public:
         }
     }
 
-    void cancel_order(id_type id, execution_reports_type &reports) {
+    void cancel_order(id_type order_id) {
+        // todo:
     }
 
     wallet_type* find_wallet(const trader_type &trader) {
@@ -359,7 +368,8 @@ private:
             it = offers.begin();
         }
     }
-    
+
+
     id_type get_next_id() {
         return ++next_id;
     }
@@ -387,7 +397,7 @@ void print_book(FILE *out,const book &book) {
     }
 }
 
-void print_wallet(FILE *out, const exchange::wallet_type &wallet) {
+void print_wallet(FILE *out, const wallet_type &wallet) {
     for(auto &entry: wallet) {
         fprintf(out, "%s: %d\n", entry.first.data(), entry.second);
     }
@@ -406,9 +416,12 @@ static void setup_test_fixture(exchange &ex) {
     // // setup playground
      execution_reports_type r;
      ex.deposit(trader_type{"perna"}, token_type{"ctsi"}, 1000000);
+     auto x = ex.find_wallet(trader_type{"perna"});
+     print_wallet(stdout, *x);
      ex.deposit(trader_type{"perna"}, token_type{"usdc"}, 1000000);
      ex.deposit(trader_type{"diego"}, token_type{"ctsi"}, 1000000);
      ex.deposit(trader_type{"diego"}, token_type{"usdc"}, 1000000);
+     
      ex.new_order(order{0, "perna", TEST_SYMBOL, side::buy, 100, 100}, r); 
     ex.new_order(order{0, "diego", TEST_SYMBOL, side::sell, 120, 100}, r); 
     ex.new_order(order{0, "perna", TEST_SYMBOL, side::buy, 110, 50}, r); 
@@ -440,6 +453,7 @@ static bool process_input(exchange &ex, FILE *in, FILE *out, bool interactive = 
     memset(cmd, 0, sizeof(cmd));
     memset(symbol.data(), 0, sizeof(symbol));
     memset(token.data(), 0, sizeof(token));
+    memset(trader.data(), 0, sizeof(trader));
     if (1 != fscanf(in, "%s", cmd)) {
         return print_error(out, "missing command");
     }
@@ -478,12 +492,12 @@ static bool process_input(exchange &ex, FILE *in, FILE *out, bool interactive = 
             fprintf(out, "No wallet for trader %s\n", trader.data());
         }
     } else if (0 == strcmp(cmd, "deposit")) {
-        if (3 != fscanf(in, "%s %s %d", token.data(), trader.data(), &qty)) {
+        if (3 != fscanf(in, "%s %s %d", trader.data(), token.data(), &qty)) {
             return print_error(out, "insufficient arguments for sell command");
         }
         ex.deposit(trader, token, qty);
     } else if (0 == strcmp(cmd, "withdraw")) {
-        if (3 != fscanf(in, "%s %s %d", token.data(), trader.data(), &qty)) {
+        if (3 != fscanf(in, "%s %s %d", trader.data(), token.data(),  &qty)) {
             return print_error(out, "insufficient arguments for sell command");
         }
         ex.withdraw(trader, token, qty);
