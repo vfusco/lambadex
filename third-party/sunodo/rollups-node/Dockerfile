@@ -13,6 +13,8 @@ USER root
 COPY --from=server-manager-img /usr/bin/server-manager /usr/bin/server-manager
 COPY --from=machine-emulator-package /usr/src/emulator/cartesi-machine-v0.15.2_amd64.deb /tmp/cartesi-machine.deb
 
-RUN apt-get remove -y cartesi-machine && \
-    apt-get install -y /tmp/cartesi-machine.deb && \
-    rm -rf /tmp/cartesi-machine.deb
+
+RUN apt-get update && \
+    apt-get remove -y cartesi-machine && \
+    DEBIAN_FRONTEND="noninteractive" apt-get install -y /tmp/cartesi-machine.deb libboost-log1.81.0 && \
+    rm -rf /tmp/cartesi-machine.deb /var/lib/apt/lists/*
