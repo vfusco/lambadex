@@ -34,3 +34,4 @@ dapp/dapp
 *.exe
 *.out
 *.app
+.vscode/settings.json
