@@ -1,9 +1,8 @@
-exchange
-exchange.dSYM
-exchange.dSYM/*
+*.dSYM/**
 .DS_store
 .vscode
 lambda-state
+*.o
 
 
 
