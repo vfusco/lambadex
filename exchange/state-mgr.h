@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <iostream>
+#include <cstring>
 
 constexpr  uint64_t LAMBDA_VIRTUAL_START = UINT64_C(0x1000000000);
 
@@ -56,7 +58,7 @@ public:
     lambda_state(const char *file_name) {
         m_length = std::filesystem::file_size(file_name);
         m_fd = open(file_name, O_RDWR);
-        m_state = mmap((void*)LAMBDA_VIRTUAL_START, m_length,  PROT_WRITE | PROT_READ,  MAP_SHARED | MAP_NOEXTEND  | MAP_FIXED, m_fd, 0);
+        m_state = mmap((void*)LAMBDA_VIRTUAL_START, m_length,  PROT_WRITE | PROT_READ,  MAP_SHARED  | MAP_FIXED, m_fd, 0);
         if (m_state == MAP_FAILED) {
             throw std::runtime_error(std::string("mmap - ") + std::strerror(errno));
         }
@@ -69,7 +71,7 @@ public:
     lambda_state(uint64_t phys_start, uint64_t length) : m_length(length) {
         m_length = length;
         m_fd = open("/dev/mem", O_RDWR);
-        m_state = mmap((void*)LAMBDA_VIRTUAL_START, m_length,  PROT_WRITE | PROT_READ,  MAP_SHARED | MAP_NOEXTEND  | MAP_FIXED, m_fd, phys_start);
+        m_state = mmap((void*)LAMBDA_VIRTUAL_START, m_length,  PROT_WRITE | PROT_READ,  MAP_SHARED | MAP_FIXED, m_fd, phys_start);
         if (m_state == MAP_FAILED) {
             throw std::runtime_error(std::string("mmap - ") + std::strerror(errno));
         }

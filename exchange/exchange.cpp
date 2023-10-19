@@ -24,7 +24,7 @@ using qty_type = int;
 using trader_type = std::array<char, 10>;
 using id_type = int; 
 using request_id_type = int;
-enum class side : char { buy = 'B',  sell = 'S'  };
+enum class side_type : char { buy = 'B',  sell = 'S'  };
 enum class exec_type : char {
     new_order = 'N',  // ack new order
     cancel = 'C',     // ack cancel
@@ -42,7 +42,7 @@ struct new_order_request : request {
     id_type id;
     trader_type trader;
     symbol_type symbol;
-    side side;
+    side_type side;
     currency_type price;
     qty_type qty;
 };
@@ -68,17 +68,8 @@ struct new_order_response : response {
 };
 
 
-
-
-
-
 // Supported tokens
-static std::map<token_type, contract_address_type> tokens {
-    {{"brl"}, {"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}},
-    {{"usd"}, {"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}},
-    {{"ctsi"}, {"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}},
-    {{"usdc"}, {"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}}
-};
+static std::map<token_type, contract_address_type> tokens;
 
 // Trading instrument
 struct instrument {
@@ -87,26 +78,25 @@ struct instrument {
 };
  
  // Supported instruments
- static std::map<token_type, instrument>  instruments  {
-     {symbol_type{"ctsi/usdc"}, {{"ctsi"}, {"usdc"}}},
-     {symbol_type{"usdc/ctsi"}, {{"usdc"}, {"ctsi"}}},
-     {symbol_type{"brl/usd"},   {{"blr"},  {"usd"}}},
-     {symbol_type{"usd/brl"},   {{"usd"},  {"brl"}}},
-     {symbol_type{"ctsi/brl"},  {{"ctsi"}, {"brl"}}},
-     {symbol_type{"brl/ctsi"},  {{"brl"},  {"ctsi"}}},
- };
+ static std::map<token_type, instrument>  instruments;
+
+static void init_data() {
+    tokens[token_type{"ctsi"}] =  contract_address_type{"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"};
+    tokens[token_type{"usdc"}] =  contract_address_type{"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"};
+     instruments[symbol_type{"ctsi/usdc"}] = instrument{token_type{"ctsi"}, token_type{"usdc"}};
+}
 
 //  Token exchange order
 struct order {
     id_type id;             // order id provided by the exchange
     trader_type trader;     // trader id
     symbol_type symbol;     // instrument's symbol (ticker)
-    side side;              // buy or sell
+    side_type side;              // buy or sell
     currency_type price;    // limit price in instrument.quote
     qty_type qty;           // remaining quantity
     
     bool matches(const order& other) {
-        return (side == side::buy && price >= other.price) || (side == side::sell && price <= other.price);
+        return (side == side_type::buy && price >= other.price) || (side == side_type::sell && price <= other.price);
     } 
 
     bool is_filled()  {
@@ -143,7 +133,7 @@ struct execution_report {
     trader_type trader; // trader id
     id_type order_id;   // order id
     exec_type type;     // execution type
-    side side;          // side of executed order
+    side_type side;          // side of executed order
     qty_type qty;       // qtd executed
     currency_type price;   // execution price
 };
@@ -167,7 +157,7 @@ public:
             reports.push_back({o.trader, o.id, exec_type::rejection});
             return;
         }
-        if (o.side == side::buy) {        
+        if (o.side == side_type::buy) {        
             auto size = o.qty * o.price;;
             auto  balance = get_balance(o.trader, instrument->second.quote);
             if (balance < size) {
@@ -189,7 +179,7 @@ public:
         reports.push_back({o.trader, o.id, exec_type::new_order, o.side, o.qty, o.price});
         // match against existing orders
         auto &book = find_or_create_book(o.symbol);
-        if (o.side == side::buy) {
+        if (o.side == side_type::buy) {
             match(o, book.asks, instrument->second, reports);    
             if (!o.is_filled()) {
                 book.bids.insert(o);
@@ -276,8 +266,8 @@ private:
             if (o.is_filled() || !o.matches(best_offer))  {
                 return;
             }
-            auto &buy_order =  o.side == side::buy ? o : best_offer;
-            auto &sell_order = o.side == side::buy ? best_offer : o;
+            auto &buy_order =  o.side == side_type::buy ? o : best_offer;
+            auto &sell_order = o.side == side_type::buy ? best_offer : o;
             auto &buyer = buy_order.trader;
             auto &seller = sell_order.trader;
             // execute trade and notify both parties
@@ -292,8 +282,8 @@ private:
             subtract_from_balance(seller, instr.base, exec_qty);               // subtract sold tokens
             add_to_balance(seller, instr.quote, exec_qty * exec_price);        // add balance at the execution price
             // notify both parties
-            reports.push_back({buyer, buy_order.id, exec_type::execution, side::buy, exec_qty, exec_price});
-            reports.push_back({seller, sell_order.id, exec_type::execution, side::sell, exec_qty, exec_price});
+            reports.push_back({buyer, buy_order.id, exec_type::execution, side_type::buy, exec_qty, exec_price});
+            reports.push_back({seller, sell_order.id, exec_type::execution, side_type::sell, exec_qty, exec_price});
             // remove offer from book if filled
             if (best_offer.is_filled()) {
                 offers.erase(it);
@@ -368,11 +358,11 @@ static void setup_test_fixture(exchange &ex) {
      ex.deposit(trader_type{"diego"}, token_type{"ctsi"}, 1000000);
      ex.deposit(trader_type{"diego"}, token_type{"usdc"}, 1000000);
      
-     ex.new_order(order{0, "perna", TEST_SYMBOL, side::buy, 100, 100}, r); 
-    ex.new_order(order{0, "diego", TEST_SYMBOL, side::sell, 120, 100}, r); 
-    ex.new_order(order{0, "perna", TEST_SYMBOL, side::buy, 110, 50}, r); 
-    ex.new_order(order{0, "perna", TEST_SYMBOL, side::buy, 111, 40}, r); 
-    ex.new_order(order{0, "diego", TEST_SYMBOL, side::sell, 112, 50}, r); 
+     ex.new_order(order{0, "perna", TEST_SYMBOL, side_type::buy, 100, 100}, r); 
+    ex.new_order(order{0, "diego", TEST_SYMBOL, side_type::sell, 120, 100}, r); 
+    ex.new_order(order{0, "perna", TEST_SYMBOL, side_type::buy, 110, 50}, r); 
+    ex.new_order(order{0, "perna", TEST_SYMBOL, side_type::buy, 111, 40}, r); 
+    ex.new_order(order{0, "diego", TEST_SYMBOL, side_type::sell, 112, 50}, r); 
     auto *book = ex.find_book(symbol_type{TEST_SYMBOL});
     print_book(stdout, *book);
 }
@@ -410,12 +400,12 @@ static bool process_input(exchange &ex, FILE *in, FILE *out, bool interactive = 
         if (4 != fscanf(in, "%s %s %d %d", symbol.data(), trader.data(), &price, &qty)) {
             return print_error(out, "insufficient arguments for buy command");
         }
-        ex.new_order(order{0, trader, symbol, side::buy, price, qty}, reports);
+        ex.new_order(order{0, trader, symbol, side_type::buy, price, qty}, reports);
     } else if (0 == strcmp(cmd, "sell")) {
         if (4 != fscanf(in, "%s %s %d %d", symbol.data(), trader.data(), &price, &qty)) {
             return print_error(out, "insufficient arguments for sell command");
         }
-        ex.new_order(order{0, trader, symbol, side::sell, price, qty}, reports);
+        ex.new_order(order{0, trader, symbol, side_type::sell, price, qty}, reports);
     } else if (0 == strcmp(cmd, "book")) {
         if (1 != fscanf(in, "%s", symbol.data())) {
             return print_error(out, "insufficient arguments for book command");
@@ -479,6 +469,7 @@ static void print_help_and_exit(const char* program_name) {
 }
 
 int main(int argc, char** argv) {
+    init_data();
     //unique_ptr<lambda_state> state;
     std::unique_ptr<lambda_state> state;
 
@@ -547,16 +538,13 @@ int main(int argc, char** argv) {
         // create master object at the start of the arena
         void *root = arena->allocate(sizeof(exchange));
         pex = new (root) exchange();
+        if (opt_setup_test_fixture) {
+            // setup test fixtureexchange ex;
+            setup_test_fixture(*pex);
+        }
+    } else {
+        process_inputs(*pex, opt_interactive);
     }
-    auto &ex = *pex;
-
-    if (opt_setup_test_fixture) {
-        // setup test fixtureexchange ex;
-        setup_test_fixture(ex);
-    } 
-
-    process_inputs(ex, opt_interactive);
-    
     return 0;
 }
 
