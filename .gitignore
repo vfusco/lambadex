@@ -31,3 +31,6 @@
 *.out
 *.app
 .vscode/settings.json
+exchange/.bash_history
+.gitignore
+exchange/exchange-emu.ext2
