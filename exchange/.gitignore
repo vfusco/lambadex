@@ -3,6 +3,10 @@
 .vscode
 lambda-state
 *.o
+exchange
+exchange-emu
+exchange-linux
+state.bin
 
 
 
