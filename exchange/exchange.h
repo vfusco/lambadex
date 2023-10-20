@@ -13,8 +13,6 @@
 #include <unistd.h>
 #include "state-mgr.h"
 
-constexpr  uint64_t LAMBDA_PHYS_START = UINT64_C(0);
-
 using symbol_type = std::array<char, 10>;
 using token_type = std::array<char, 10>;
 using currency_type = int;
@@ -118,24 +116,24 @@ using execution_reports_type = std::vector<execution_report>;
 using wallet_type = std::map<token_type, currency_type, std::less<token_type>, arena_allocator<std::pair<const token_type, currency_type>>>;
 using books_type = std::map<symbol_type, book, std::less<symbol_type>, arena_allocator<std::pair<const symbol_type, book>>>;
 using wallets_type = std::map<trader_type, wallet_type, std::less<trader_type>, arena_allocator<std::pair<const trader_type, wallet_type>>>;    
-
-std::map<token_type, contract_address_type> tokens;
-std::map<token_type, instrument>  instruments;
-
-void init_instruments() {
-    tokens[token_type{"ctsi"}] =  contract_address_type{"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"};
-    tokens[token_type{"usdc"}] =  contract_address_type{"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"};
-    instruments[symbol_type{"ctsi/usdc"}] = instrument{token_type{"ctsi"}, token_type{"usdc"}};
-}
+using tokens_type = std::map<token_type, contract_address_type, std::less<token_type>, arena_allocator<std::pair<const token_type, contract_address_type>>>;
+using instruments_type = std::map<token_type, instrument, std::less<token_type>, arena_allocator<std::pair<const token_type, instrument>>>;    
 
 // exchange class to be "deserialized" from lambda state
 class exchange {
+    tokens_type tokens;
+    instruments_type instruments;
     books_type books;
     wallets_type wallets;
     id_type next_id{0};
 
 public:    
-   
+    exchange() {
+        tokens[token_type{"ctsi"}] =  contract_address_type{"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"};
+        tokens[token_type{"usdc"}] =  contract_address_type{"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"};
+        instruments[symbol_type{"ctsi/usdc"}] = instrument{token_type{"ctsi"}, token_type{"usdc"}};
+    }
+    
     bool new_order(order o, execution_reports_type &reports) {
         // validate order
         auto instrument = instruments.find(o.symbol);
