@@ -1,16 +1,22 @@
-all: io-test.emulator io-test.host
+all: dapp.host
 
 TOOLCHAIN:=cartesi/toolchain:0.15.0
 
 create-inputs:
-	echo '{"status":"successful","sender":"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef","token":"ctsi","amount":"1000"}' | ./lambadex-memory-range.lua encode erc20-deposit-input > input-0.bin
+	echo '{"status":"successful","sender":"diego","token":"ctsi","amount":"100000"}' | ./lambadex-memory-range.lua encode erc20-deposit-input > input-0.bin
 	echo '{"msg_sender":"erc20-portal", "epoch_index": 0, "input_index": 0, "block_number":0, "time_stamp": 0}' | ./lambadex-memory-range.lua encode input-metadata > input-0-metadata.bin
-	echo '{"symbol":"ctsi/usdc","side":"buy","price":1234,"quantity":4321}' | ./lambadex-memory-range.lua encode lambadex-new-order-input > input-1.bin
-	echo '{"msg_sender":"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", "epoch_index": 0, "input_index": 1, "block_number":1, "time_stamp": 1}' | ./lambadex-memory-range.lua encode input-metadata > input-1-metadata.bin
-	echo '{"token":"ctsi","quantity":1000}' | ./lambadex-memory-range.lua encode lambadex-withdraw-input > input-2.bin
-	echo '{"msg_sender":"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", "epoch_index": 0, "input_index": 2, "block_number":2, "time_stamp": 2}' | ./lambadex-memory-range.lua encode input-metadata > input-2-metadata.bin
-	echo '{"id":54321}' | ./lambadex-memory-range.lua encode lambadex-cancel-order-input > input-3.bin
-	echo '{"msg_sender":"0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", "epoch_index": 0, "input_index": 3, "block_number":3, "time_stamp": 3}' | ./lambadex-memory-range.lua encode input-metadata > input-3-metadata.bin
+	echo '{"status":"successful","sender":"perna","token":"usdt","amount":"10000"}' | ./lambadex-memory-range.lua encode erc20-deposit-input > input-1.bin
+	echo '{"msg_sender":"erc20-portal", "epoch_index": 0, "input_index": 1, "block_number":1, "time_stamp": 1}' | ./lambadex-memory-range.lua encode input-metadata > input-1-metadata.bin
+	echo '{"symbol":"ctsi/usdt","side":"buy","price":15,"quantity":1000}' | ./lambadex-memory-range.lua encode lambadex-new-order-input > input-2.bin
+	echo '{"msg_sender":"perna", "epoch_index": 0, "input_index": 2, "block_number":2, "time_stamp": 2}' | ./lambadex-memory-range.lua encode input-metadata > input-2-metadata.bin
+	echo '{"symbol":"ctsi/usdt","side":"sell","price":13,"quantity":500}' | ./lambadex-memory-range.lua encode lambadex-new-order-input > input-3.bin
+	echo '{"msg_sender":"diego", "epoch_index": 0, "input_index": 3, "block_number":3, "time_stamp": 3}' | ./lambadex-memory-range.lua encode input-metadata > input-3-metadata.bin
+	echo '{"symbol":"ctsi/usdt","side":"sell","price":18,"quantity":1500}' | ./lambadex-memory-range.lua encode lambadex-new-order-input > input-4.bin
+	echo '{"msg_sender":"diego", "epoch_index": 0, "input_index": 4, "block_number":4, "time_stamp": 4}' | ./lambadex-memory-range.lua encode input-metadata > input-4-metadata.bin
+	echo '{"token":"ctsi","quantity":100}' | ./lambadex-memory-range.lua encode lambadex-withdraw-input > input-5.bin
+	echo '{"msg_sender":"perna", "epoch_index": 0, "input_index": 5, "block_number":5, "time_stamp": 5}' | ./lambadex-memory-range.lua encode input-metadata > input-5-metadata.bin
+	echo '{"id":54321}' | ./lambadex-memory-range.lua encode lambadex-cancel-order-input > input-6.bin
+	echo '{"msg_sender":"diego", "epoch_index": 0, "input_index": 6, "block_number":6, "time_stamp": 6}' | ./lambadex-memory-range.lua encode input-metadata > input-6-metadata.bin
 
 create-queries:
 	echo '{}' | ./lambadex-memory-range.lua encode lambadex-wallet-query > query-0.bin
@@ -56,7 +62,7 @@ run-inputs: create-inputs fs.ext2
 		--remote-shutdown \
 		--rollup \
 		--rollup-advance-state=input:input-%i.bin,input_metadata:input-%i-metadata.bin,input_index_begin:0,input_index_end:4,epoch_index:0,notice_hashes:/dev/null,voucher_hashes:/dev/null \
-		-- /mnt/fs/io-test.emulator
+		-- /mnt/fs/dapp.emulator
 
 io-test.emulator: io-test.cpp
 	docker run \
@@ -72,6 +78,9 @@ io-test.emulator: io-test.cpp
 
 io-test.host: io-test.cpp
 	g++ -std=c++20 -DBARE_METAL -O4 -o $@ $<
+
+dapp.host: dapp.cpp
+	g++ -std=c++20 -DBARE_METAL -O4 -o $@ $^
 
 mmap-test.host: mmap-test.cpp
 	g++ -std=c++20 -O4 -o $@ $<
