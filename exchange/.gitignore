@@ -6,6 +6,9 @@ lambda-state
 exchange
 exchange-emu
 exchange-linux
+exchange-cli
+exchange-cli-emu
+exchange-cli-linux
 state.bin
 
 
