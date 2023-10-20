@@ -116,7 +116,8 @@ JSON object to stdout.
       the JSON representation is
         {
           "trader": <eth-address>,
-          "event": "new-order" | "cancel-order" | "execution" | "rejection",
+          "event": "new-order" | "cancel-order" | "execution" |
+                   "rejection-insuficient-funds" | "rejection-invalid-symbol",
           "id": <number>,
           "symbol": <string>,
           "side": "buy" | "sell",
@@ -199,7 +200,11 @@ local from_eth_address = {
     [string.lower("0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB")] = "erc20-portal",
     [string.lower("0x491604c0FDF08347Dd1fa4Ee062a822A5DD06B5D")] = "ctsi",
     [string.lower("0xdAC17F958D2ee523a2206206994597C13D831ec7")] = "usdt",
-    [string.lower("0xB8c77482e45F1F44dE1745F52C74426C631bDD52")] = "bnb"
+    [string.lower("0xB8c77482e45F1F44dE1745F52C74426C631bDD52")] = "bnb",
+    [string.lower("0x0000000000000000000000000000000000000001")] = "perna",
+    [string.lower("0x0000000000000000000000000000000000000002")] = "diego",
+    [string.lower("0x0000000000000000000000000000000000000003")] = "victor",
+    [string.lower("0x0000000000000000000000000000000000000004")] = "alex"
 }
 
 local function hexhash(hash)
@@ -287,7 +292,11 @@ local to_eth_address = {
     ["erc20-portal"] = string.lower("0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB"),
     ["ctsi"] = string.lower("0x491604c0FDF08347Dd1fa4Ee062a822A5DD06B5D"),
     ["usdt"] = string.lower("0xdAC17F958D2ee523a2206206994597C13D831ec7"),
-    ["bnb"] = string.lower("0xB8c77482e45F1F44dE1745F52C74426C631bDD52")
+    ["bnb"] = string.lower("0xB8c77482e45F1F44dE1745F52C74426C631bDD52"),
+    ["perna"] = string.lower("0x0000000000000000000000000000000000000001"),
+    ["diego"] = string.lower("0x0000000000000000000000000000000000000002"),
+    ["victor"] = string.lower("0x0000000000000000000000000000000000000003"),
+    ["alex"] = string.lower("0x0000000000000000000000000000000000000004")
 }
 
 local function unhexhash(addr, name)
@@ -314,14 +323,16 @@ local encode_event_what_enum = {
     ["new-order"] = "N",
     ["cancel-order"] = "C",
     ["execution"] = "E",
-    ["rejection"] = "R"
+    ["rejection-insufficient-funds"] = "R",
+    ["rejection-invalid-symbol"] = "r",
 }
 
 local decode_event_what_enum = {
     ["N"] = "new-order",
     ["C"] = "cancel-order",
     ["E"] = "execution",
-    ["R"] = "rejection"
+    ["R"] = "rejection-insufficient-funds",
+    ["r"] = "rejection-invalid-symbol",
 }
 
 local encode_erc20_deposit_status_enum = {
