@@ -171,7 +171,6 @@ static void print_help_and_exit(const char* program_name) {
 }
 
 int main(int argc, char** argv) {
-    init_instruments();
     //unique_ptr<lambda_state> state;
     std::unique_ptr<lambda_state> state;
 
