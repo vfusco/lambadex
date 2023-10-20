@@ -2,7 +2,7 @@ TOOLCHAIN:=cartesi/toolchain:0.15.0
 LINUX:=gcc:12.2.0
 
 CXX = g++
-CXXFLAGS = -std=c++17
+CXXFLAGS = -std=c++20
 SRCS = exchange-cli.cpp state-mgr.cpp
 
 RUN_TOOLCHAIN = \
