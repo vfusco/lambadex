@@ -87,4 +87,4 @@ linux-env:
 	$(RUN_LINUX) /bin/sh
 
 clean:
-	rm -f $(OBJS) exchange exchange-cli-emu exchange-cli-linux
+	rm -f $(OBJS) exchange-cli exchange-cli-emu exchange-cli-linux
