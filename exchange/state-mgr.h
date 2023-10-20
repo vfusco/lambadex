@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cstring>
 
-constexpr  uint64_t LAMBDA_VIRTUAL_START = UINT64_C(0x1000000000);
+#define  LAMBDA_VIRTUAL_START  UINT64_C(0x1000000000)
 
 class memory_arena {
     uint64_t m_length;
