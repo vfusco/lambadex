@@ -3,6 +3,7 @@
 import { WagmiConfig, createConfig, configureChains, mainnet } from 'wagmi'
 
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
+import { publicProvider } from 'wagmi/providers/public'
 import { foundry } from 'wagmi/chains'
 
 import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
@@ -13,13 +14,14 @@ import Allowance from './allowance'
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [foundry],
-  [
-    jsonRpcProvider({
-      rpc: (chain) => ({
-        http: `http://localhost:8545`,
-      }),
-    }),
-  ],
+  [publicProvider()],
+  //[
+  //  jsonRpcProvider({
+  //    rpc: (chain) => ({
+  //      http: `http://localhost:8545`,
+  //    }),
+  //  }),
+  //],
 )
 
 const config = createConfig({
