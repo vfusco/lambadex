@@ -1,4 +1,4 @@
-all: dapp.host
+all: dapp.host dapp.emulator
 
 TOOLCHAIN:=cartesi/toolchain:0.15.0
 
@@ -19,7 +19,7 @@ create-inputs:
 	echo '{"msg_sender":"diego", "epoch_index": 0, "input_index": 6, "block_number":6, "time_stamp": 6}' | ./lambadex-memory-range.lua encode input-metadata > input-6-metadata.bin
 
 create-queries:
-	echo '{}' | ./lambadex-memory-range.lua encode lambadex-wallet-query > query-0.bin
+	echo '{ "trader": "diego" }' | ./lambadex-memory-range.lua encode lambadex-wallet-query > query-0.bin
 	echo '{ "symbol":"ctsi/usdt", "depth":10 }' | ./lambadex-memory-range.lua encode lambadex-book-query > query-1.bin
 
 run-queries: create-queries fs.ext2
@@ -34,7 +34,7 @@ run-queries: create-queries fs.ext2
 		--remote-protocol="jsonrpc" \
 		--rollup \
 		--no-remote-destroy \
-		-- /mnt/fs/io-test.emulator
+		-- /mnt/fs/dapp.emulator
 	for q in query-0.bin query-1.bin ; do \
 		cartesi-machine \
 			--remote-address="localhost:8080" \
@@ -61,10 +61,29 @@ run-inputs: create-inputs fs.ext2
 		--remote-protocol="jsonrpc" \
 		--remote-shutdown \
 		--rollup \
-		--rollup-advance-state=input:input-%i.bin,input_metadata:input-%i-metadata.bin,input_index_begin:0,input_index_end:4,epoch_index:0,notice_hashes:/dev/null,voucher_hashes:/dev/null \
-		-- /mnt/fs/dapp.emulator
+		--rollup-advance-state=input:input-%i.bin,input_metadata:input-%i-metadata.bin,input_index_begin:0,input_index_end:7,epoch_index:0,notice_hashes:/dev/null,voucher_hashes:/dev/null \
+		-- /mnt/fs/dapp.emulator --initialize-lambda
+
+run-inputs-host: create-inputs dapp.host
+	truncate --size 2M lambda.bin
+	./dapp.host --image-filename=lambda.bin --initialize-lambda --rollup-input-begin=0 --rollup-input-end=6
+
+run-queries-host: create-queries dapp.host
+	./dapp.host --image-filename=lambda.bin --rollup-query-begin=0 --rollup-query-end=2
 
 io-test.emulator: io-test.cpp
+	docker run \
+         -e USER=$$(id -u -n) \
+         -e GROUP=$$(id -g -n) \
+         -e UID=$$(id -u) \
+         -e GID=$$(id -g) \
+         -v `pwd`:/home/$$(id -u -n) \
+         -w /home/$$(id -u -n) \
+         --rm \
+		$(TOOLCHAIN) \
+		riscv64-cartesi-linux-gnu-g++ -std=c++20 -O4 -o $@ $<
+
+dapp.emulator: dapp.cpp
 	docker run \
          -e USER=$$(id -u -n) \
          -e GROUP=$$(id -g -n) \
@@ -97,8 +116,8 @@ mmap-test.emulator: mmap-test.cpp
 		$(TOOLCHAIN) \
 		riscv64-cartesi-linux-gnu-g++ -std=c++20 -O4 -o $@ $<
 
-fs.ext2: io-test.emulator
+fs.ext2: dapp.emulator
 	mkdir -p fs
-	cp -f io-test.emulator fs/
+	cp -f $< fs/
 	genext2fs -f -i 512 -b 8192 -d fs fs.ext2
 	truncate -s %4096 fs.ext2
