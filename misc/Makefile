@@ -1,4 +1,4 @@
-all: dapp.host dapp.emulator
+all: jsonrpc-dapp.host dapp.host dapp.emulator
 
 TOOLCHAIN:=cartesi/toolchain:0.15.0
 
@@ -71,7 +71,7 @@ run-inputs-host: create-inputs dapp.host
 run-queries-host: create-queries dapp.host
 	./dapp.host --image-filename=lambda.bin --rollup-query-begin=0 --rollup-query-end=2
 
-io-test.emulator: io-test.cpp
+dapp.emulator: dapp.cpp io-types.h rollup-emulator.hpp
 	docker run \
          -e USER=$$(id -u -n) \
          -e GROUP=$$(id -g -n) \
@@ -81,40 +81,22 @@ io-test.emulator: io-test.cpp
          -w /home/$$(id -u -n) \
          --rm \
 		$(TOOLCHAIN) \
-		riscv64-cartesi-linux-gnu-g++ -std=c++20 -O4 -o $@ $<
+		riscv64-cartesi-linux-gnu-g++ -DEMULATOR -std=c++20 -O4 -o $@ $<
 
-dapp.emulator: dapp.cpp
-	docker run \
-         -e USER=$$(id -u -n) \
-         -e GROUP=$$(id -g -n) \
-         -e UID=$$(id -u) \
-         -e GID=$$(id -g) \
-         -v `pwd`:/home/$$(id -u -n) \
-         -w /home/$$(id -u -n) \
-         --rm \
-		$(TOOLCHAIN) \
-		riscv64-cartesi-linux-gnu-g++ -std=c++20 -O4 -o $@ $<
-
-io-test.host: io-test.cpp
+dapp.host: dapp.cpp io-types.h rollup-bare-metal.hpp
 	g++ -std=c++20 -DBARE_METAL -O4 -o $@ $<
 
-dapp.host: dapp.cpp
-	g++ -std=c++20 -DBARE_METAL -O4 -o $@ $^
+jsonrpc-dapp.host: jsonrpc-dapp.host.o json-util.o mongoose.o
+	g++ -std=c++20 -DJSONRPC_SERVER -O4 -o $@ $^
 
-mmap-test.host: mmap-test.cpp
-	g++ -std=c++20 -O4 -o $@ $<
+jsonrpc-dapp.host.o: dapp.cpp rollup-jsonrpc-server.hpp io-types.h
+	g++ -std=c++20 -DJSONRPC_SERVER -O4 -c -o $@ $<
 
-mmap-test.emulator: mmap-test.cpp
-	docker run \
-         -e USER=$$(id -u -n) \
-         -e GROUP=$$(id -g -n) \
-         -e UID=$$(id -u) \
-         -e GID=$$(id -g) \
-         -v `pwd`:/home/$$(id -u -n) \
-         -w /home/$$(id -u -n) \
-         --rm \
-		$(TOOLCHAIN) \
-		riscv64-cartesi-linux-gnu-g++ -std=c++20 -O4 -o $@ $<
+json-util.o: json-util.cpp json-util.h io-types.h
+	g++ -std=c++20 -DJSONRPC_SERVER -O4 -c -o $@ $<
+
+mongoose.o: mongoose.c
+	gcc -c -O4 -o $@ $^
 
 fs.ext2: dapp.emulator
 	mkdir -p fs
