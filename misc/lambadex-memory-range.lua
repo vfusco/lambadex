@@ -94,7 +94,9 @@ JSON object to stdout.
 
     lambadex-wallet-query
       the JSON representation is
-        { }
+        {
+          "trader": <eth-address>
+        }
 
     voucher
       the JSON representation is
@@ -142,7 +144,13 @@ JSON object to stdout.
       the JSON representation is
         {
           "symbol": <string>,
-          "entries": [ { "side": "buy" | "sell", "quantity": <number>, "price": <number> }, ... ]
+          "entries": [ {
+            "trader": <eth-address>,
+            "id": <number>,
+            "side": "buy" | "sell",
+            "quantity": <number>,
+            "price": <number>
+          }, ... ]
         }
 
     lambadex-wallet-report
@@ -525,10 +533,14 @@ local function decode_lambadex_book_report()
     local entry_count = read_uint64()
     local entries = {}
     for i = 1, entry_count do
+        local trader = read_address20()
+        local id = read_uint64()
         local side = check_enum(read_byte(), decode_order_side_enum, "side")
         local quantity = read_uint64()
         local price = read_uint64()
         entries[#entries+1] = {
+            trader = hexhash(trader),
+            id = id,
             side = side,
             quantity = quantity,
             price = price
@@ -561,6 +573,8 @@ local function encode_lambadex_book_report()
         string.pack("<I8", entry_count)
     }
     for _, v in ipairs(j.entries) do
+        payload_tab[#payload_tab+1] = unhexhash(v.trader, "trader")
+        payload_tab[#payload_tab+1] = string.pack("<I8", check_number(v.id, "id"))
         payload_tab[#payload_tab+1] = check_enum(v.side, encode_order_side_enum, "side")
         payload_tab[#payload_tab+1] = string.pack("<I8", check_number(v.quantity, "quantity"))
         payload_tab[#payload_tab+1] = string.pack("<I8", check_number(v.price, "price"))
@@ -622,17 +636,31 @@ local function encode_lambadex_wallet_report()
 end
 
 local function encode_lambadex_wallet_query()
+    local j = read_json()
+    local payload = table.concat{
+        'W',
+        unhexhash(j.trader, "trader")
+    }
     write_be256(32)
-    write_be256(1)
-    io.stdout:write("W")
+    write_be256(#payload)
+    io.stdout:write(payload)
 end
 
 local function decode_lambadex_wallet_query()
-    assert(read_be256() == 32) -- skip offset
-    local length = read_be256()
     local what = read_byte()
     assert(what == 'W', "not a wallet query")
-    io.stdout:write("{}\n")
+    local trader = read_address20()
+    io.stdout:write(
+        json.encode({
+            trader = hexhash(trader),
+        }, {
+            indent = true,
+            keyorder = {
+                "trader"
+            },
+        }),
+        "\n"
+    )
 end
 
 local function decode_lambadex_execution_notice()
