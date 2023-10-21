@@ -350,10 +350,13 @@ static std::ostream &operator<<(std::ostream &out, const book_query_type &s) {
 }
 
 struct wallet_query_type {
+    trader_type trader;
 } __attribute__((packed));
 
 static std::ostream &operator<<(std::ostream &out, const wallet_query_type &s) {
-    out << "wallet_query{}";
+    out << "wallet_query{";
+    out << s.trader;
+    out << "}";
     return out;
 }
 
@@ -367,6 +370,8 @@ struct query_type {
 
 // This is a report in answer to a book query
 struct book_entry_type {
+    trader_type trader;
+    id_type id;
     side_what side;
     quantity_type quantity;
     currency_type price;
@@ -374,6 +379,8 @@ struct book_entry_type {
 
 static std::ostream &operator<<(std::ostream &out, const book_entry_type &s) {
     out << "book_entry_type{";
+    out << "trader:" << s.trader << ',';
+    out << "id:" << s.id << ',';
     out << "side:" << s.side << ',';
     out << "quantity:" << s.quantity << ',';
     out << "price:" << s.price;
@@ -391,6 +398,7 @@ struct book_report_type {
 static std::ostream &operator<<(std::ostream &out, const book_report_type &s) {
     out << "book_report_type{";
     out << "symbol:" << s.symbol << ',';
+    out << "entry_count:" << s.entry_count << ',';
     out << "entries:{";
     for (unsigned i = 0; i < s.entry_count; ++i) {
         out << s.entries[i] << ',';
@@ -422,6 +430,7 @@ struct wallet_report_type {
 
 static std::ostream &operator<<(std::ostream &out, const wallet_report_type &s) {
     out << "wallet_report_type{";
+    out << "entriy_count:" << s.entry_count << ',';
     out << "entries:{";
     for (unsigned i = 0; i < s.entry_count; ++i) {
         out << s.entries[i] << ',';
@@ -500,14 +509,14 @@ struct order_type {
     symbol_type symbol;  // instrument's symbol (ticker)
     side_what side;      // buy or sell
     currency_type price; // limit price in instrument.quote
-    quantity_type qty;   // remaining quantity
+    quantity_type quantity;   // remaining quantity
 
     bool matches(const order_type &other) {
         return (side == side_what::buy && price >= other.price) || (side == side_what::sell && price <= other.price);
     }
 
     bool is_filled() {
-        return qty == 0;
+        return quantity == 0;
     }
 };
 
@@ -528,7 +537,7 @@ struct best_ask {
 using bids_type = std::multiset<order_type, best_bid, arena_allocator<order_type>>;
 using asks_type = std::multiset<order_type, best_ask, arena_allocator<order_type>>;
 
-struct book {
+struct book_type {
     symbol_type symbol;
     bids_type bids;
     asks_type asks;
@@ -537,7 +546,7 @@ struct book {
 using wallet_type = std::map<token_type, currency_type, std::less<token_type>,
     arena_allocator<std::pair<const token_type, currency_type>>>;
 using books_type =
-    std::map<symbol_type, book, std::less<symbol_type>, arena_allocator<std::pair<const symbol_type, book>>>;
+    std::map<symbol_type, book_type, std::less<symbol_type>, arena_allocator<std::pair<const symbol_type, book_type>>>;
 using wallets_type = std::map<trader_type, wallet_type, std::less<trader_type>,
     arena_allocator<std::pair<const trader_type, wallet_type>>>;
 using instruments_type = std::map<symbol_type, instrument_type, std::less<symbol_type>,
@@ -559,30 +568,30 @@ public:
         // validate order
         auto instrument = instruments.find(o.symbol);
         if (instrument == instruments.end()) {
-            reports.push_back({o.trader, event_what::rejection_invalid_symbol, o.id, o.symbol, o.side, o.qty, o.price});
+            reports.push_back({o.trader, event_what::rejection_invalid_symbol, o.id, o.symbol, o.side, o.quantity, o.price});
             return false;
         }
         if (o.side == side_what::buy) {
-            auto size = (o.qty * o.price) / 100;
+            auto size = (o.quantity * o.price) / 100;
             auto balance = get_balance(o.trader, instrument->second.quote);
             if (balance < size) {
                 reports.push_back(
-                    {o.trader, event_what::rejection_insufficient_funds, o.id, o.symbol, o.side, o.qty, o.price});
+                    {o.trader, event_what::rejection_insufficient_funds, o.id, o.symbol, o.side, o.quantity, o.price});
                 return false;
             }
             subtract_from_balance(o.trader, instrument->second.quote, size);
         } else {
-            auto size = o.qty;
+            auto size = o.quantity;
             auto balance = get_balance(o.trader, instrument->second.base);
             if (balance < size) {
                 reports.push_back(
-                    {o.trader, event_what::rejection_insufficient_funds, o.id, o.symbol, o.side, o.qty, o.price});
+                    {o.trader, event_what::rejection_insufficient_funds, o.id, o.symbol, o.side, o.quantity, o.price});
                 return false;
             }
             subtract_from_balance(o.trader, instrument->second.base, size);
         }
         // send report acknowledging new order
-        reports.push_back({o.trader, event_what::new_order, o.id, o.symbol, o.side, o.qty, o.price});
+        reports.push_back({o.trader, event_what::new_order, o.id, o.symbol, o.side, o.quantity, o.price});
         // match against existing orders
         auto &book = find_or_create_book(o.symbol);
         if (o.side == side_what::buy) {
@@ -607,7 +616,7 @@ public:
         return nullptr;
     }
 
-    book *find_book(const symbol_type &symbol) {
+    book_type *find_book(const symbol_type &symbol) {
         auto it = books.find(symbol);
         if (it != books.end()) {
             return &it->second;
@@ -628,12 +637,12 @@ public:
     }
 
 private:
-    book &find_or_create_book(const symbol_type &symbol) {
+    book_type &find_or_create_book(const symbol_type &symbol) {
         auto it = books.find(symbol);
         if (it != books.end()) {
             return it->second;
         }
-        return books.emplace(symbol, book{symbol, {}, {}}).first->second;
+        return books.emplace(symbol, book_type{symbol, {}, {}}).first->second;
         ;
     }
 
@@ -671,23 +680,23 @@ private:
             auto &buyer = buy_order.trader;
             auto &seller = sell_order.trader;
             // execute trade and notify both parties
-            auto exec_qty = std::min(o.qty, best_offer.qty);
-            buy_order.qty -= exec_qty;
-            sell_order.qty -= exec_qty;
+            auto exec_quantity = std::min(o.quantity, best_offer.quantity);
+            buy_order.quantity -= exec_quantity;
+            sell_order.quantity -= exec_quantity;
             // exchange tokens
             auto exec_price = (o.price + best_offer.price) / 2;
             add_to_balance(buyer, instr.quote,
-                (exec_qty * buy_order.price) / 100); // add balance locked at the limit order price
+                (exec_quantity * buy_order.price) / 100); // add balance locked at the limit order price
             subtract_from_balance(buyer, instr.quote,
-                (exec_qty * exec_price) / 100);                  // subtract balance at the execution price
-            add_to_balance(buyer, instr.base, exec_qty);         // add bought tokens
-            subtract_from_balance(seller, instr.base, exec_qty); // subtract sold tokens
-            add_to_balance(seller, instr.quote, (exec_qty * exec_price) / 100); // add balance at the execution price
+                (exec_quantity * exec_price) / 100);                  // subtract balance at the execution price
+            add_to_balance(buyer, instr.base, exec_quantity);         // add bought tokens
+            subtract_from_balance(seller, instr.base, exec_quantity); // subtract sold tokens
+            add_to_balance(seller, instr.quote, (exec_quantity * exec_price) / 100); // add balance at the execution price
             // notify both parties
             reports.push_back(
-                {buyer, event_what::execution, buy_order.id, o.symbol, side_what::buy, exec_qty, exec_price});
+                {buyer, event_what::execution, buy_order.id, o.symbol, side_what::buy, exec_quantity, exec_price});
             reports.push_back(
-                {seller, event_what::execution, sell_order.id, o.symbol, side_what::sell, exec_qty, exec_price});
+                {seller, event_what::execution, sell_order.id, o.symbol, side_what::sell, exec_quantity, exec_price});
             // remove offer from book if filled
             if (best_offer.is_filled()) {
                 offers.erase(it);
@@ -1241,7 +1250,7 @@ static bool advance_state_new_order(rollup_state_type *rollup_state, lambda_type
                             .symbol = new_order.symbol,
                             .side = new_order.side,
                             .price = new_order.price,
-                            .qty = new_order.quantity},
+                            .quantity = new_order.quantity},
         notices);
     // Loop over execution notices emitting
     for (const auto &execution : notices) {
@@ -1309,10 +1318,41 @@ static bool advance_state(rollup_state_type *rollup_state, lambda_type *state,
 
 static bool inspect_state_book(rollup_state_type *rollup_state, lambda_type *state, const book_query_type &query) {
     std::cerr << "[dapp] " << query << '\n';
-    report_type report{.what = report_what::book,
-        .book = book_report_type{.symbol = query.symbol,
-            .entry_count = 3,
-            .entries = {{{side_what::buy, 3, 10}, {side_what::sell, 4, 15}, {side_what::buy, 2, 35}}}}};
+    report_type report{.what = report_what::book, .book = { .symbol = query.symbol, .entry_count = 0 } };
+    auto depth = std::min(query.depth, MAX_BOOK_ENTRY);
+    auto *book = state->ex.find_book(query.symbol);
+    if (book) {
+        auto b = book->bids.begin();
+        auto a = book->asks.begin();
+        while ((b != book->bids.end() || a != book->asks.end())) {
+            if (b != book->bids.end()) {
+                report.book.entries[report.book.entry_count] = book_entry_type{
+                    .trader = b->trader,
+                    .id = b->id,
+                    .side = side_what::buy,
+                    .quantity = b->quantity,
+                    .price = b->price
+                };
+                if (++report.book.entry_count >= depth) {
+                    break;
+                }
+                ++b;
+            }
+            if (a != book->asks.end()) {
+                report.book.entries[report.book.entry_count] = book_entry_type{
+                    .trader = a->trader,
+                    .id = a->id,
+                    .side = side_what::sell,
+                    .quantity = a->quantity,
+                    .price = a->price
+                };
+                if (++report.book.entry_count >= depth) {
+                    break;
+                }
+                ++a;
+            }
+        }
+    }
     if (!rollup_write_report(rollup_state, report)) {
         (void) fprintf(stderr, "[dapp] unable to issue book query report\n");
     }
@@ -1322,9 +1362,16 @@ static bool inspect_state_book(rollup_state_type *rollup_state, lambda_type *sta
 
 static bool inspect_state_wallet(rollup_state_type *rollup_state, lambda_type *state, const wallet_query_type &query) {
     std::cerr << "[dapp] " << query << '\n';
-    report_type report{.what = report_what::wallet,
-        .wallet = wallet_report_type{.entry_count = 3,
-            .entries = {{{CTSI_ADDRESS, 1000}, {USDT_ADDRESS, 100}, {BNB_ADDRESS, 7}}}}};
+    report_type report{.what = report_what::wallet, .wallet = { .entry_count = 0 } };
+    auto *wallet = state->ex.find_wallet(query.trader);
+    if (wallet) {
+        for (auto& [token, amount]: *wallet) {
+            if (report.wallet.entry_count >= MAX_WALLET_ENTRY) {
+                break;
+            }
+            report.wallet.entries[report.wallet.entry_count++] = wallet_entry_type{token, amount};
+        }
+    }
     if (!rollup_write_report(rollup_state, report)) {
         (void) fprintf(stderr, "[dapp] unable to issue book query report\n");
     }
@@ -1348,6 +1395,7 @@ static bool inspect_state(rollup_state_type *rollup_state, lambda_type *state, c
 int main(int argc, char *argv[]) {
     uint64_t lambda_virtual_start = LAMBDA_VIRTUAL_START;
     const char *lambda_drive_label = "lambda";
+    bool initialize_lambda = false;
     int end = 0;
     for (int i = 1; i < argc; ++i) {
         end = 0;
@@ -1359,6 +1407,8 @@ int main(int argc, char *argv[]) {
         } else if (sscanf(argv[i], "--lambda-virtual-start=%" SCNu64 "%n", &lambda_virtual_start, &end) == 1 &&
             argv[i][end] == 0) {
             ;
+        } else if (strcmp(argv[i], "--initialize-lambda") == 0) {
+            initialize_lambda = true;
         } else {
             (void) fprintf(stderr, "[dapp] invalid argument '%s'\n", argv[i]);
             return 1;
@@ -1368,6 +1418,14 @@ int main(int argc, char *argv[]) {
     if (!rollup_state) {
         (void) fprintf(stderr, "[dapp] unable to initialize rollup\n");
         return 1;
+    }
+    lambda_type *lambda = reinterpret_cast<lambda_type *>(rollup_state->lambda);
+    g_arena = &lambda->arena;
+    if (initialize_lambda) {
+        memset(lambda, 0, rollup_state->lambda_length);
+        new (&lambda->arena) memory_arena(rollup_state->lambda_length -
+            (reinterpret_cast<char *>(&lambda->arena) - reinterpret_cast<char *>(lambda)));
+        new (&lambda->ex) perna::exchange();
     }
     rollup_request_loop<lambda_type, input_type, query_type>(rollup_state, advance_state, inspect_state);
     // Unreachable code.
