@@ -83,6 +83,13 @@ dapp.emulator: dapp.cpp io-types.h rollup-emulator.hpp
 		$(TOOLCHAIN) \
 		riscv64-cartesi-linux-gnu-g++ -DEMULATOR -std=c++20 -O4 -o $@ $<
 
+run-queries-jsonrpc: jsonrpc-dapp.host
+	./jsonrpc-dapp.host --server-address=localhost:8080 --image-filename=lambda.bin 2>&1 &
+	while ! netstat -ntl 2>&1 | grep 8080; do sleep 1; done
+	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"inspect","params":{"query":{"what":"book","book":{"symbol":"ctsi/usdt","depth":8}}}}' http://localhost:8080
+	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"inspect","params":{"query":{"what":"wallet","wallet":{"trader":"0x0000000000000000000000000000000000000001"}}}}' http://localhost:8080
+	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"shutdown"}' http://localhost:8080
+
 dapp.host: dapp.cpp io-types.h rollup-bare-metal.hpp
 	g++ -std=c++20 -DBARE_METAL -O4 -o $@ $<
 
