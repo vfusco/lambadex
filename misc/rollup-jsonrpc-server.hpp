@@ -385,7 +385,6 @@ std::tuple<ARGS...> parse_object_args(const json &j, const char *(&param_name)[s
 template <typename... ARGS>
 std::tuple<ARGS...> parse_args(const json &j, const char *(&param_name)[sizeof...(ARGS)]) {
     constexpr auto mandatory_params = count_mandatory_params<ARGS...>();
-    std::cerr << "mandatory: " << mandatory_params << '\n';
     if (!j.contains("params")) {
         if constexpr (mandatory_params == 0) {
             return std::make_tuple(ARGS{}...);
@@ -443,7 +442,7 @@ static json jsonrpc_inspect_handler(const json &j, mg_connection *con, rollup_st
 /// \param con Mongoose connection
 /// \param j JSON response object
 void jsonrpc_http_reply(mg_connection *con, rollup_state_type *h, const json &j) {
-    std::cerr << h->config.server_address << " response is " << j.dump().data() << "\n";
+    // std::cerr << h->config.server_address << " response is " << j.dump().data() << "\n";
     return mg_http_reply(con, 200, "Access-Control-Allow-Origin: *\r\nContent-Type: application/json\r\n", "%s",
         j.dump().data());
 }
@@ -451,7 +450,7 @@ void jsonrpc_http_reply(mg_connection *con, rollup_state_type *h, const json &j)
 /// \brief Sends an empty response through the Mongoose connection
 /// \param con Mongoose connection
 void jsonrpc_send_empty_reply(mg_connection *con, rollup_state_type *h) {
-    std::cerr << h->config.server_address << " response is empty\n";
+    // std::cerr << h->config.server_address << " response is empty\n";
     return mg_http_reply(con, 200, "Access-Control-Allow-Origin: *\r\nContent-Type: application/json\r\n", "");
 }
 
@@ -509,7 +508,7 @@ static void http_handler(mg_connection *con, int ev, void *ev_data, void *h_data
         }
         // Only accept / URI
         const std::string_view uri{hm->uri.ptr, hm->uri.len};
-        std::cerr << h->config.server_address << " request is " << std::string_view{hm->body.ptr, hm->body.len} << '\n';
+        // std::cerr << h->config.server_address << " request is " << std::string_view{hm->body.ptr, hm->body.len} << '\n';
         if (uri != "/") {
             std::cerr << h->config.server_address << " rejected unexpected \"" << uri << "\" uri\n";
             // anything else

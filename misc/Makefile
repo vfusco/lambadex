@@ -130,9 +130,9 @@ dapp.emulator: dapp.cpp io-types.h rollup-emulator.hpp
 run-queries-jsonrpc: jsonrpc-dapp.host
 	./jsonrpc-dapp.host --server-address=localhost:8080 --image-filename=lambda.bin 2>&1 &
 	while ! netstat -ntl 2>&1 | grep 8080; do sleep 1; done
-	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"inspect","params":{"query":{"what":"book","book":{"symbol":"ctsi/usdt","depth":8}}}}' http://localhost:8080
-	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"inspect","params":{"query":{"what":"wallet","wallet":{"trader":"0x0000000000000000000000000000000000000001"}}}}' http://localhost:8080
-	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"shutdown"}' http://localhost:8080
+	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"inspect","params":{"query":{"what":"book","book":{"symbol":"ctsi/usdt","depth":8}}}}' http://localhost:8080 | jq
+	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"inspect","params":{"query":{"what":"wallet","wallet":{"trader":"0x0000000000000000000000000000000000000002"}}}}' http://localhost:8080 | jq
+	curl -X POST -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"id","method":"shutdown"}' http://localhost:8080 | jq
 
 dapp.host: dapp.cpp io-types.h rollup-bare-metal.hpp
 	$(CXX) -std=c++20 -DBARE_METAL -O4 -o $@ $<
