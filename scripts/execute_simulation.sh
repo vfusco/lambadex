@@ -39,18 +39,17 @@ TOKENS="$SUNODO_TOKEN_ADDRESS $new_tokens"
     $TOKENS
 
 # deposit all tokens to the dapp
-#./$SCRIPTS_DIR/deposit.sh \
-#    $DAPP_ADDRESS \
-#    $ERC20_PORTAL_ADDRESS \
-#    $MINT_AMOUNT \
-#    $OUT_FILE \
-#    $USERS_AMOUNT \
-#    $MEMORY_RANGE_UTIL \
-#    $TOKENS
+./$SCRIPTS_DIR/deposit.sh \
+    $DAPP_ADDRESS \
+    $ERC20_PORTAL_ADDRESS \
+    $MINT_AMOUNT \
+    $OUT_FILE \
+    $USERS_AMOUNT \
+    $TOKENS
 
 # execute trades
-./$SCRIPTS_DIR/run_trades.sh \
-    $SCRIPTS_DIR \
-    $MEMORY_RANGE_UTIL \
-    $INPUT_BOX_ADDRESS \
-    $DAPP_ADDRESS
+#./$SCRIPTS_DIR/run_trades.sh \
+#    $SCRIPTS_DIR \
+#    $MEMORY_RANGE_UTIL \
+#    $INPUT_BOX_ADDRESS \
+#    $DAPP_ADDRESS
