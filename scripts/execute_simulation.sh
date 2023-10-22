@@ -2,7 +2,7 @@
 
 SCRIPTS_DIR=$(dirname "$0")
 PROJECT_DIR=$SCRIPTS_DIR/$(dirname "$0")/../
-MEMORY_RANGE_UTIL=$PROJECT_DIR/misc/
+MEMORY_RANGE_UTIL=$PROJECT_DIR/misc/lambadex-memory-range.lua
 TOKEN_CONTRACTS_DIR=$PROJECT_DIR/contracts/
 
 USERS_AMOUNT=1

@@ -12,4 +12,4 @@ payload_json="{\"symbol\":\"$SYMBOL\",\"side\":\"buy\",\"price\":$PRICE,\"quanti
 payload_bin=$(echo $payload_json | $MEMORY_RANGE_UTIL encode lambadex-new-order-input | dd bs=64 skip=1 status=none)
 payload_hex=$(echo -n $payload_hex | xxd -p | tr -d '\n' | tr -d ' ')
 
-cast send $INPUT_BOX_ADDRESS "addInput(address,bytes)" $DAPP_ADDRESS "0x$payload_hex" --mnemonic="$SENDER_KEY" --gas-limit=$GAS_LIMIT > /dev/null
+cast send $INPUT_BOX_ADDRESS "addInput(address,bytes)" $DAPP_ADDRESS "0x$payload_hex" --private-key="$SENDER_KEY" --gas-limit=$GAS_LIMIT > /dev/null
