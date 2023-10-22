@@ -37,15 +37,18 @@ public:
     void *get_data() {
         return m_data;
     }
+    
     void *allocate(int length) {
-        auto p = m_data + m_next_free;
-        m_next_free += length;
-        if (m_next_free > get_data_length()) {
-            throw std::bad_alloc();
+        volatile void *p =  m_data + m_next_free;
+        if ((m_next_free + length) > get_data_length()) {
+            return nullptr;
         }
-        return p;
+        m_next_free += length;
+        return const_cast<void*>(p);
     }
+    
     void deallocate(void *p, int length) {}
+    
     uint64_t get_data_length() {
         return m_length - offsetof(memory_arena, m_data);
     }
