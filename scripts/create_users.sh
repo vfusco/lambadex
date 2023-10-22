@@ -14,12 +14,12 @@ GAS_PER_TEST_ACCOUNT=5000000000000000000  # 5 ETH
 echo "-> Creating test users..."
 echo "{" > $OUT_FILE
 for ((i=1; i<=$NUM_WALLETS; i++)); do
-    result=$(cast wallet new)
-    address=$(echo "$result" | grep "Address:" | awk '{print $2}')
-    private_key=$(echo "$result" | grep "Private key:" | awk '{print $3}')
+    result=$(wagyu ethereum hd -j)
+    address=$(echo "$result" | jq -r '.[0].address')
+    mnemonic=$(echo "$result" | jq -r '.[0].mnemonic')
     echo "  \"User$i\": {" >> $OUT_FILE
     echo "    \"Address\": \"$address\"," >> $OUT_FILE
-    echo "    \"PrivateKey\": \"$private_key\"" >> $OUT_FILE
+    echo "    \"Mnemonic\": \"$mnemonic\"" >> $OUT_FILE
 
     if [ $i -ne $NUM_WALLETS ]; then
         echo "  }," >> $OUT_FILE

@@ -18,6 +18,7 @@ deployed_contracts=$(./$SCRIPTS_DIR/deploy_tokens.sh $PROJECT_DIR)
 echo "-> Getting token contracts addresses..."
 SUNODO_ADDRESS_BOOK=$(sunodo address-book)
 SUNODO_TOKEN_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep "SunodoToken" | awk '{print $2}')
+INPUT_BOX_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep "InputBox" | awk '{print $2}')
 DAPP_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep -E "CartesiDApp\s+" | awk '{print $2}')
 ERC20_PORTAL_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep "ERC20Portal" | awk '{print $2}')
 
@@ -25,6 +26,7 @@ echo $deployed_contracts | sed 's/\([a-zA-Z]\+\):\([a-zA-Z0-9]\+\)/\n\1: \2/g'
 echo "SunodoToken: $SUNODO_TOKEN_ADDRESS"
 echo "DApp: $DAPP_ADDRESS"
 echo "ERC20Portal: $ERC20_PORTAL_ADDRESS"
+echo "InputBox: $INPUT_BOX_ADDRESS"
 
 new_tokens=$(echo $deployed_contracts | grep -o '0x[0-9a-fA-F]\+' | awk '{ printf $0 " " }')
 TOKENS="$SUNODO_TOKEN_ADDRESS $new_tokens"
@@ -45,3 +47,10 @@ TOKENS="$SUNODO_TOKEN_ADDRESS $new_tokens"
 #    $USERS_AMOUNT \
 #    $MEMORY_RANGE_UTIL \
 #    $TOKENS
+
+# execute trades
+./$SCRIPTS_DIR/run_trades.sh \
+    $SCRIPTS_DIR \
+    $MEMORY_RANGE_UTIL \
+    $INPUT_BOX_ADDRESS \
+    $DAPP_ADDRESS
