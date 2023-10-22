@@ -1,6 +1,6 @@
 force ?= false
 
-all: node dapp
+all: dapp node
 
 submodules:
 	git submodule update --init --recursive
@@ -42,10 +42,15 @@ node: manager
 dapp/.sunodo/image/hash:
 	@cd dapp && sunodo build
 
-dapp: dapp/.sunodo/image/hash sdk
+dapp: sdk dapp/.sunodo/image/hash
 
 run: dapp node
 	@cd dapp && sunodo run
+
+clean-dapp:
+	@cd dapp && sunodo clean
+
+clean: clean-dapp
 
 help:
 	@echo "Usage:"
@@ -58,4 +63,4 @@ help:
 	@echo "  make run                 - Build the run the dapp."
 	@echo "  make help                - Display this usage information."
 
-.PHONY: all emulator manager sdk node help
+.PHONY: all emulator manager sdk node help clean-dapp clean

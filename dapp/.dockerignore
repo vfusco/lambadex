@@ -1,5 +1,4 @@
 .sunodo
+.gitignore
 dapp
-backend
-frontend
-third-party
+*.o

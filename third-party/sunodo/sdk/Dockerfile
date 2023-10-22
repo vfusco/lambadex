@@ -65,6 +65,9 @@ ADD --chmod=644 \
     /usr/share/cartesi-machine/images/linux.bin
 RUN curl -sSL https://github.com/cartesi/image-kernel/releases/download/v$LINUX_VERSION/linux-headers-$LINUX_KERNEL_VERSION.tar.xz | \
     tar -xJ -C /
+RUN \
+    truncate --size 32M /usr/share/cartesi-machine/images/lambda.bin && \
+    chmod 666 /usr/share/cartesi-machine/images/lambda.bin
 
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -9,7 +9,7 @@ RUN \
 COPY --from=sunodo/sdk:0.2.0-lambadex /opt/riscv /opt/riscv
 WORKDIR /opt/cartesi/dapp
 COPY . .
-RUN make
+RUN make dapp
 
 FROM --platform=linux/riscv64 riscv64/ubuntu:22.04
 
@@ -31,4 +31,4 @@ ENV PATH="/opt/cartesi/bin:${PATH}"
 WORKDIR /opt/cartesi/dapp
 COPY --from=builder /opt/cartesi/dapp/dapp .
 
-ENTRYPOINT ["/opt/cartesi/dapp/dapp"]
+ENTRYPOINT ["/opt/cartesi/dapp/dapp", "--initialize-lambda"]
