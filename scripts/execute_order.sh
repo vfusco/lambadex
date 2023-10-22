@@ -13,4 +13,5 @@ payload_bin=$(echo "$ORDER_JSON"  | tr -d '\n' | $MEMORY_RANGE_UTIL encode lamba
 payload_hex=$(echo -n $payload_hex | xxd -p | tr -d '\n' | tr -d ' ')
 
 echo "Executing order: $ORDER_JSON"
-cast send $INPUT_BOX_ADDRESS "addInput(address,bytes)" $DAPP_ADDRESS "0x$payload_hex" --private-key="$SENDER_KEY" --gas-limit=$GAS_LIMIT > /dev/null
+cast send $INPUT_BOX_ADDRESS "addInput(address,bytes)" $DAPP_ADDRESS "0x$payload_hex" \
+    --private-key="$SENDER_KEY" --gas-limit=$GAS_LIMIT > /dev/null

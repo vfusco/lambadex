@@ -5,7 +5,7 @@ PROJECT_DIR=$SCRIPTS_DIR/$(dirname "$0")/../
 MEMORY_RANGE_UTIL=$PROJECT_DIR/misc/lambadex-memory-range.lua
 TOKEN_CONTRACTS_DIR=$PROJECT_DIR/contracts/
 
-USERS_AMOUNT=1
+USERS_AMOUNT=4
 MINT_AMOUNT=1000000000000000000
 OUT_FILE=wallets.json
 
@@ -48,8 +48,9 @@ TOKENS="$SUNODO_TOKEN_ADDRESS $new_tokens"
     $TOKENS
 
 # execute trades
-#./$SCRIPTS_DIR/run_trades.sh \
-#    $SCRIPTS_DIR \
-#    $MEMORY_RANGE_UTIL \
-#    $INPUT_BOX_ADDRESS \
-#    $DAPP_ADDRESS
+./$SCRIPTS_DIR/run_trades.sh \
+    $SCRIPTS_DIR \
+    $MEMORY_RANGE_UTIL \
+    $INPUT_BOX_ADDRESS \
+    $DAPP_ADDRESS \
+    $OUT_FILE
