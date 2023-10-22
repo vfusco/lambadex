@@ -340,7 +340,7 @@ struct lambda_type {
 
 static bool advance_state_deposit(rollup_state_type *rollup_state, lambda_type *state,
     const erc20_deposit_input_type &deposit) {
-    std::cerr << "[dapp] " << deposit << '\n';
+    // std::cerr << "[dapp] " << deposit << '\n';
     // Consider only successful ERC-20 deposits.
     if (deposit.status != erc20_deposit_status::successful) {
         (void) fprintf(stderr, "[dapp] deposit erc20 transfer failed\n");
@@ -350,7 +350,7 @@ static bool advance_state_deposit(rollup_state_type *rollup_state, lambda_type *
     state->ex.deposit(deposit.sender, deposit.token, quantity);
     notice_type notice{.what = notice_what::wallet_deposit,
         .wallet = wallet_notice_type{.trader = deposit.sender, .token = deposit.token, .quantity = quantity}};
-    std::cerr << "[dapp] " << notice.wallet << '\n';
+    // std::cerr << "[dapp] " << notice.wallet << '\n';
     if (!rollup_write_notice(rollup_state, notice)) {
         (void) fprintf(stderr, "[dapp] unable to issue execution notice\n");
     }
@@ -361,7 +361,7 @@ static bool advance_state_deposit(rollup_state_type *rollup_state, lambda_type *
 
 static bool advance_state_new_order(rollup_state_type *rollup_state, lambda_type *state, const eth_address &sender,
     const new_order_input_type &new_order) {
-    std::cerr << "[dapp] " << new_order << '\n';
+    // std::cerr << "[dapp] " << new_order << '\n';
     execution_notices_type notices;
     state->ex.new_order(perna::order_type{.id = 0,
                             .trader = sender,
@@ -372,7 +372,7 @@ static bool advance_state_new_order(rollup_state_type *rollup_state, lambda_type
         notices);
     // Loop over execution notices emitting
     for (const auto &execution : notices) {
-        std::cerr << "[dapp] " << execution << '\n';
+        // std::cerr << "[dapp] " << execution << '\n';
         if (!rollup_write_notice(rollup_state, notice_type{.what = notice_what::execution, .execution = execution})) {
             (void) fprintf(stderr, "[dapp] unable to issue execution notice\n");
         }
@@ -384,7 +384,7 @@ static bool advance_state_new_order(rollup_state_type *rollup_state, lambda_type
 
 static bool advance_state_cancel_order(rollup_state_type *rollup_state, lambda_type *state, const eth_address &sender,
     const cancel_order_input_type &cancel_order) {
-    std::cerr << "[dapp] " << cancel_order << '\n';
+    // std::cerr << "[dapp] " << cancel_order << '\n';
     // Commit changes to rollup state
     (void) flush_lambda(rollup_state);
     return true;
@@ -392,7 +392,7 @@ static bool advance_state_cancel_order(rollup_state_type *rollup_state, lambda_t
 
 static bool advance_state_withdraw(rollup_state_type *rollup_state, lambda_type *state, const eth_address &sender,
     const withdraw_input_type &withdraw) {
-    std::cerr << "[dapp] " << withdraw << '\n';
+    // std::cerr << "[dapp] " << withdraw << '\n';
     if (state->ex.withdraw(sender, withdraw.token, withdraw.quantity)) {
         be256 amount = to_be256(withdraw.quantity);
         erc20_transfer_payload payload = encode_erc20_transfer(sender, amount);
@@ -400,11 +400,11 @@ static bool advance_state_withdraw(rollup_state_type *rollup_state, lambda_type 
             (void) fprintf(stderr, "[dapp] unable to issue withdraw voucher\n");
             return false;
         }
-        std::cerr << "[dapp] " << payload << '\n';
+        // std::cerr << "[dapp] " << payload << '\n';
         // Emit a notice marking the event
         notice_type notice{.what = notice_what::wallet_withdraw,
             .wallet = wallet_notice_type{.trader = sender, .token = withdraw.token, .quantity = withdraw.quantity}};
-        std::cerr << "[dapp] " << notice.wallet << '\n';
+        // std::cerr << "[dapp] " << notice.wallet << '\n';
         if (!rollup_write_notice(rollup_state, notice)) {
             (void) fprintf(stderr, "[dapp] unable to issue execution notice\n");
         }
@@ -435,7 +435,7 @@ static bool advance_state(rollup_state_type *rollup_state, lambda_type *state,
 }
 
 static bool inspect_state_book(rollup_state_type *rollup_state, lambda_type *state, const book_query_type &query) {
-    std::cerr << "[dapp] " << query << '\n';
+    // std::cerr << "[dapp] " << query << '\n';
     report_type report{.what = report_what::book, .book = { .symbol = query.symbol, .entry_count = 0 } };
     auto depth = std::min(query.depth, MAX_BOOK_ENTRY);
     auto *book = state->ex.find_book(query.symbol);
@@ -474,12 +474,12 @@ static bool inspect_state_book(rollup_state_type *rollup_state, lambda_type *sta
     if (!rollup_write_report(rollup_state, report)) {
         (void) fprintf(stderr, "[dapp] unable to issue book query report\n");
     }
-    std::cerr << "[dapp] " << report.book << '\n';
+    // std::cerr << "[dapp] " << report.book << '\n';
     return true;
 }
 
 static bool inspect_state_wallet(rollup_state_type *rollup_state, lambda_type *state, const wallet_query_type &query) {
-    std::cerr << "[dapp] " << query << '\n';
+    // std::cerr << "[dapp] " << query << '\n';
     report_type report{.what = report_what::wallet, .wallet = { .entry_count = 0 } };
     auto *wallet = state->ex.find_wallet(query.trader);
     if (wallet) {
@@ -493,7 +493,7 @@ static bool inspect_state_wallet(rollup_state_type *rollup_state, lambda_type *s
     if (!rollup_write_report(rollup_state, report)) {
         (void) fprintf(stderr, "[dapp] unable to issue book query report\n");
     }
-    std::cerr << "[dapp] " << report.wallet << '\n';
+    // std::cerr << "[dapp] " << report.wallet << '\n';
     return true;
 }
 

@@ -647,6 +647,8 @@ local function encode_lambadex_wallet_query()
 end
 
 local function decode_lambadex_wallet_query()
+    assert(read_be256() == 32) -- skip offset
+    local length = read_be256()
     local what = read_byte()
     assert(what == 'W', "not a wallet query")
     local trader = read_address20()

@@ -30,6 +30,8 @@ rollup_state_type *rollup_open(const rollup_config_type &config) {
     static rollup_state_type rollup_state{.lambda = nullptr,
         .lambda_length = 0,
         .current_input = 0,
+        .current_query = 0,
+        .current_voucher = 0,
         .current_report = 0,
         .current_notice = 0};
     rollup_state.config = config;
@@ -43,14 +45,12 @@ rollup_state_type *rollup_open(const rollup_config_type &config) {
             return nullptr;
         }
     }
-    rollup_state.current_input = config.input_begin;
     if (config.query_begin != config.query_end) {
         if (!config.query_format) {
             (void) fprintf(stderr, "[dapp] missing rollup query format\n");
             return nullptr;
         }
     }
-    rollup_state.current_query = config.query_begin;
     if (!config.image_filename) {
         (void) fprintf(stderr, "[dapp] missing image filename\n");
         return nullptr;
@@ -102,12 +102,13 @@ static int rollup_request_loop(rollup_state_type *rollup_state, ADVANCE_STATE ad
         be256 length;
         INSPECT_QUERY payload;
     } __attribute__((packed));
-    for (int i = rollup_state->config.input_begin; i < rollup_state->config.input_end; ++i) {
+    for (rollup_state->current_input = rollup_state->config.input_begin;
+        rollup_state->current_input < rollup_state->config.input_end; ++rollup_state->current_input) {
         // Start report/notice/voucher counters anew
         rollup_state->current_notice = rollup_state->current_voucher = rollup_state->current_report = 0;
         char filename[FILENAME_MAX];
         // Load input metadata
-        snprintf(filename, std::size(filename), rollup_state->config.input_metadata_format, i);
+        snprintf(filename, std::size(filename), rollup_state->config.input_metadata_format, rollup_state->current_input);
         (void) fprintf(stderr, "Loading %s\n", filename);
         auto *fin = fopen(filename, "r");
         if (!fin) {
@@ -128,7 +129,7 @@ static int rollup_request_loop(rollup_state_type *rollup_state, ADVANCE_STATE ad
         }
         fclose(fin);
         // Load input
-        snprintf(filename, std::size(filename), rollup_state->config.input_format, i);
+        snprintf(filename, std::size(filename), rollup_state->config.input_format, rollup_state->current_input);
         (void) fprintf(stderr, "Loading %s\n", filename);
         fin = fopen(filename, "r");
         if (!fin) {
@@ -152,17 +153,18 @@ static int rollup_request_loop(rollup_state_type *rollup_state, ADVANCE_STATE ad
         bool accept = advance_cb(rollup_state, reinterpret_cast<LAMBDA *>(rollup_state->lambda),
             raw_input_metadata.metadata, raw_input.payload, read - (sizeof(raw_input) - sizeof(ADVANCE_INPUT)));
         if (accept) {
-            (void) fprintf(stderr, "Accepted input %d\n", i);
+            (void) fprintf(stderr, "Accepted input %d\n", rollup_state->current_input);
         } else {
-            (void) fprintf(stderr, "Rejected input %d\n", i);
+            (void) fprintf(stderr, "Rejected input %d\n", rollup_state->current_input);
         }
     }
-    for (int i = rollup_state->config.query_begin; i < rollup_state->config.query_end; ++i) {
+    for (rollup_state->current_query = rollup_state->config.query_begin;
+         rollup_state->current_query < rollup_state->config.query_end; ++rollup_state->current_query) {
         // Start report/notice/voucher counters anew
         rollup_state->current_notice = rollup_state->current_voucher = rollup_state->current_report = 0;
         char filename[FILENAME_MAX];
         // Load input metadata
-        snprintf(filename, std::size(filename), rollup_state->config.query_format, i);
+        snprintf(filename, std::size(filename), rollup_state->config.query_format, rollup_state->current_query);
         (void) fprintf(stderr, "Loading %s\n", filename);
         auto *fin = fopen(filename, "r");
         if (!fin) {
@@ -186,9 +188,9 @@ static int rollup_request_loop(rollup_state_type *rollup_state, ADVANCE_STATE ad
         bool accept = inspect_cb(rollup_state, reinterpret_cast<LAMBDA *>(rollup_state->lambda), raw_query.payload,
             read - (sizeof(raw_query) - sizeof(INSPECT_QUERY)));
         if (accept) {
-            (void) fprintf(stderr, "Accepted query %d\n", i);
+            (void) fprintf(stderr, "Accepted query %d\n", rollup_state->current_query);
         } else {
-            (void) fprintf(stderr, "Rejected query %d\n", i);
+            (void) fprintf(stderr, "Rejected query %d\n", rollup_state->current_query);
         }
     }
     return 0;
@@ -204,11 +206,11 @@ template <typename T>
     };
     raw_data_type data{.offset = to_be256(32), .length = to_be256(sizeof(payload)), .payload = payload};
     char filename[FILENAME_MAX];
-    const char *prefix = "input";
-    if (rollup_state->current_input >= rollup_state->config.input_end) {
-        prefix = "query";
+    if (rollup_state->current_input <= rollup_state->config.input_end) {
+        snprintf(filename, std::size(filename), "input-%d-%s-%d.bin", rollup_state->current_input, what, index);
+    } else {
+        snprintf(filename, std::size(filename), "query-%d-%s-%d.bin", rollup_state->current_query, what, index);
     }
-    snprintf(filename, std::size(filename), "%s-%d-%s-%d.bin", prefix, rollup_state->current_input, what, index);
     (void) fprintf(stderr, "Storing %s\n", filename);
     auto *fout = fopen(filename, "w");
     if (!fout) {
@@ -251,12 +253,13 @@ template <typename T>
         .length = to_be256(sizeof(payload)),
         .payload = payload};
     char filename[FILENAME_MAX];
-    const char *prefix = "input";
-    if (rollup_state->current_input >= rollup_state->config.input_end) {
-        prefix = "query";
+    if (rollup_state->current_input <= rollup_state->config.input_end) {
+        snprintf(filename, std::size(filename), "input-%d-voucher-%d.bin", rollup_state->current_input,
+            rollup_state->current_voucher);
+    } else {
+        snprintf(filename, std::size(filename), "query-%d-voucher-%d.bin", rollup_state->current_query,
+            rollup_state->current_voucher);
     }
-    snprintf(filename, std::size(filename), "%s-%d-voucher-%d.bin", prefix, rollup_state->current_input,
-        rollup_state->current_voucher);
     (void) fprintf(stderr, "Storing %s\n", filename);
     auto *fout = fopen(filename, "w");
     if (!fout) {
