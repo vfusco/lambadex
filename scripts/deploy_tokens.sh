@@ -1,12 +1,9 @@
 #!/bin/bash
 
-PROJECT_DIR=$1
-
 RPC_URL="http://localhost:8545"
 MASTER_MNEMONIC="test test test test test test test test test test test junk"
 INIT_SUPPLY=100000000000000000000
 
-cd $PROJECT_DIR &> /dev/null
 addresses=""
 for file in ./contracts/*.sol; do
     if [ -f "$file" ]; then
@@ -16,6 +13,5 @@ for file in ./contracts/*.sol; do
         addresses="$addresses $base_filename:$deployed_to"
     fi
 done
-cd - &> /dev/null
 
 echo $addresses

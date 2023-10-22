@@ -1,6 +1,10 @@
 # Sunodo files and directories
 dapp/.sunodo
 dapp/dapp
+scripts/node_modules
+scripts/cache
+scripts/out
+scripts/wallet.json
 
 # Prerequisites
 *.d

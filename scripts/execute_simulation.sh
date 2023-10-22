@@ -1,9 +1,8 @@
-#!/bin/bash
+#!/bin/bash -x
 
 SCRIPTS_DIR=$(dirname "$0")
-PROJECT_DIR=$SCRIPTS_DIR/$(dirname "$0")/../
-MEMORY_RANGE_UTIL=$PROJECT_DIR/misc/lambadex-memory-range.lua
-TOKEN_CONTRACTS_DIR=$PROJECT_DIR/contracts/
+MEMORY_RANGE_UTIL=$SCRIPTS_DIR/../misc/lambadex-memory-range.lua
+TOKEN_CONTRACTS_DIR=$SCRIPTS_DIR/contracts/
 
 USERS_AMOUNT=4
 MINT_AMOUNT=1000000000000000000
@@ -12,11 +11,11 @@ OUT_FILE=wallets.json
 
 # deploy token contracts
 echo "-> Deploying token contracts..."
-deployed_contracts=$(./$SCRIPTS_DIR/deploy_tokens.sh $PROJECT_DIR)
+deployed_contracts=$($SCRIPTS_DIR/deploy_tokens.sh)
 
 # extract contracts addresses
 echo "-> Getting token contracts addresses..."
-SUNODO_ADDRESS_BOOK=$(sunodo address-book)
+SUNODO_ADDRESS_BOOK=$(cd ../dapp && sunodo address-book)
 SUNODO_TOKEN_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep "SunodoToken" | awk '{print $2}')
 INPUT_BOX_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep "InputBox" | awk '{print $2}')
 DAPP_ADDRESS=$(echo "$SUNODO_ADDRESS_BOOK" | grep -E "CartesiDApp\s+" | awk '{print $2}')
@@ -32,14 +31,14 @@ new_tokens=$(echo $deployed_contracts | grep -o '0x[0-9a-fA-F]\+' | awk '{ print
 TOKENS="$SUNODO_TOKEN_ADDRESS $new_tokens"
 
 # create test users and mint tokens for them
-./$SCRIPTS_DIR/create_users.sh \
+$SCRIPTS_DIR/create_users.sh \
     $USERS_AMOUNT \
     $MINT_AMOUNT \
     $OUT_FILE \
     $TOKENS
 
 # deposit all tokens to the dapp
-./$SCRIPTS_DIR/deposit.sh \
+$SCRIPTS_DIR/deposit.sh \
     $DAPP_ADDRESS \
     $ERC20_PORTAL_ADDRESS \
     $MINT_AMOUNT \
@@ -48,7 +47,7 @@ TOKENS="$SUNODO_TOKEN_ADDRESS $new_tokens"
     $TOKENS
 
 # execute trades
-./$SCRIPTS_DIR/run_trades.sh \
+$SCRIPTS_DIR/run_trades.sh \
     $SCRIPTS_DIR \
     $MEMORY_RANGE_UTIL \
     $INPUT_BOX_ADDRESS \
