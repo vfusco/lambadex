@@ -180,7 +180,7 @@ public:
             subtract_from_balance(o.trader, instrument->second.base, size);
         }
         // send report acknowledging new order
-        reports.push_back({o.trader, event_what::new_order, o.id, o.symbol, o.side, o.quantity, o.price});
+        reports.push_back({o.trader, event_what::new_order, get_next_id(), o.symbol, o.side, o.quantity, o.price});
         // match against existing orders
         auto &book = find_or_create_book(o.symbol);
         if (o.side == side_what::buy) {
