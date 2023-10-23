@@ -1,0 +1,56 @@
+1. Welcome to the presentation for the LambaDEX project, and effort
+   by Machine Reference team members Alex, Diego, Fusco, and Perna.
+
+2. I'd like to start by congratulating all Hackathon team members for
+   their outstanding efforts in creating so many interesting projects.
+   Our team believes that even though many of the chosen verticals are
+   fun and may attract curious eyes, there really is only one proven
+   practical use for blockchain.
+
+3. And this is, of course, DeFi. In this spirit, we decided to explore
+   the design space for decentralized exchanges.
+
+4. Creating a working exchange using L1 technologies is both
+   technologically impossible and economically inviable.
+
+5. Curent Cartesi technology makes this not only possible,
+   but actually fun. Nevertheless, there are still scalability issues.
+   Our project is about how future Cartesi technologies will solve these.
+
+6. We are, of course, talking about lambda. We have discussed this before.
+   In a nutshell, lambda allows us to inspect and advance the state
+   of the machine in bare-metal, outside the Cartesi Machine emulator,
+   while maintaining verifiability.
+
+7. UI demo
+
+Here is the lamda machine being created.
+Here we are hand feeding exchange with some users, money, and orders
+Here you can see some orders executing
+Here you can see the UI view of order books for different pairs
+
+8. Video
+
+9. Backend live-demo
+
+10. What you saw
+
+    1. Running in the Cartesi Machine, a wallet and order book written in C++,
+    with heavy use of C++ standard library of data-structures, supporting
+    multiple users, tokens, and order books
+
+    2. A JSONRPC inspect server that quickly answers queries by running the
+    same C++ code bare-metal to access the same native state that was created
+    and modified from inside the Cartesi Machine.
+
+    3. The same C++ code running bare-metal, accepting inputs to create or
+    modify the same native state in a way that matches the Cartesi Machine.
+
+11. This is possible because we share the state between emulated
+    and bare-metal execution while mapping it to the same region in
+    the address space of the processes involved.
+    All state ends up there because of our allocator, and the
+    representation is the same because we use the same standard
+    library implementations inside and outside.
+
+12. Questions? Come meet us on Discord.

@@ -1,0 +1,19 @@
+make
+make create-inputs-queries
+make run-inputs
+# you can see a cartesi machine was created that initializes the lambda.bin
+# then processed a bunch of inputs, updated the state, and generated a
+# bunch of outputs
+make show-input-output
+# for example, here is an order that executed
+make run-queries
+# you can see a new cartesi machine that takes the existing lambda.bin
+# and answers queries
+make show-query-output
+# for example, here is an order book query
+make run-queries-jsonrpc
+# you can run queries bare-metal using a jsonrpc server in the host!
+# it directly uses the lambda.bin that was crated inside the cartesi machine
+make run-inputs-host
+# in fact, you can create and advance the state in bare-metal!
+diff lambda.bin lambda.host.bin
