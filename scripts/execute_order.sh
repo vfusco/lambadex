@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 ORDER_JSON=$1
 MEMORY_RANGE_UTIL=$2

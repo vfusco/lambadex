@@ -8,9 +8,9 @@ token_pairs = ["ADA/USDT", "BNB/USDT", "BTC/USDT", "CTSI/USDT", "DAI/USDT", "DOG
 
 users = {
     "User1": {token: 10000 for token in tokens},
-    "User2": {token: 10000 for token in tokens}
-#    "User3": {token: 10000 for token in tokens},
-#    "User4": {token: 10000 for token in tokens}
+    "User2": {token: 10000 for token in tokens},
+    "User3": {token: 10000 for token in tokens},
+    "User4": {token: 10000 for token in tokens}
 }
 
 orders = []

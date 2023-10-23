@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 SCRIPTS_DIR=$1
 MEMORY_RANGE_UTIL=$2
