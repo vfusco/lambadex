@@ -11,7 +11,8 @@ import {
   CNavItem,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilBell, cilList, cilMenu } from '@coreui/icons'
+import { cilBell, cilList, cilMenu, cilToggleOn, cilToggleOff } from '@coreui/icons'
+import { useMetaMask } from 'metamask-react'
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
@@ -20,6 +21,14 @@ import { logo } from 'src/assets/brand/logo'
 const AppHeader = () => {
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
+
+  const { status, connect } = useMetaMask()
+
+  const handleConnect = () => {
+    if (status === 'notConnected') {
+      connect()
+    }
+  }
 
   return (
     <CHeader position="sticky" className="mb-4">
@@ -43,6 +52,11 @@ const AppHeader = () => {
           <CNavItem>
             <CNavLink href="#">
               <CIcon icon={cilBell} size="lg" />
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink color="success" href="#" onClick={handleConnect}>
+              <CIcon icon={status === 'connected' ? cilToggleOn : cilToggleOff} size="lg" />
             </CNavLink>
           </CNavItem>
         </CHeaderNav>

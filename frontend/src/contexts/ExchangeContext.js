@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useCallback,
+  useState,
+} from 'react'
 import PropTypes from 'prop-types'
 
 const ExchangeContext = createContext()
@@ -7,6 +14,7 @@ const initialState = {
   orders: {},
   transactions: {},
   assets: [],
+  selectedSymbol: 'CTSI/USDT',
 }
 
 function reducer(state, action) {
@@ -22,6 +30,16 @@ function reducer(state, action) {
         ...state,
         assets: action.assets,
       }
+    case 'UPDATE_ORDER_BOOK':
+      return {
+        ...state,
+        orders: action.orders,
+      }
+    case 'SET_SYMBOL':
+      return {
+        ...state,
+        selectedSymbol: action.selectedSymbol,
+      }
     default:
       throw new Error(`Unknown action type: ${action.type}`)
   }
@@ -33,11 +51,28 @@ export function ExchangeProvider({ children, exchangeService }) {
   useEffect(() => {
     const assets = exchangeService.getAvailableAssets()
     dispatch({ type: 'SET_ASSETS', assets })
+
     const subscriptionId = exchangeService.subscribe((orders, transactions) => {
       dispatch({ type: 'UPDATE', orders, transactions })
     })
+
     return () => exchangeService.unsubscribe(subscriptionId)
   }, [exchangeService])
+
+  useEffect(() => {
+    if (state.selectedSymbol) {
+      const intervalId = setInterval(async () => {
+        try {
+          const orders = await exchangeService.getOrderBook(state.selectedSymbol)
+          dispatch({ type: 'UPDATE_ORDER_BOOK', orders })
+        } catch (error) {
+          console.error('Error fetching order book:', error)
+        }
+      }, 1000) // Set interval to 1 second (adjust as needed)
+
+      return () => clearInterval(intervalId)
+    }
+  }, [exchangeService, state.selectedSymbol, dispatch]) // Added dispatch to dependencies
 
   const submitOrder = useCallback(
     async (asset, order) => {
@@ -53,8 +88,15 @@ export function ExchangeProvider({ children, exchangeService }) {
     [exchangeService],
   )
 
+  const selectSymbol = useCallback(
+    (symbol) => {
+      dispatch({ type: 'SET_SYMBOL', selectedSymbol: symbol }) // Updated to dispatch action
+    },
+    [dispatch],
+  ) // Added dispatch to dependencies
+
   return (
-    <ExchangeContext.Provider value={{ ...state, submitOrder, cancelOrder }}>
+    <ExchangeContext.Provider value={{ ...state, submitOrder, cancelOrder, selectSymbol }}>
       {children}
     </ExchangeContext.Provider>
   )

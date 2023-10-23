@@ -3,7 +3,7 @@ import { useMetaMask } from 'metamask-react'
 import { ethers, parseEther, formatEther } from 'ethers'
 import { CCol, CRow } from '@coreui/react'
 
-const Metamask = () => {
+const Wallet = () => {
   const { status, connect, account, chainId } = useMetaMask()
   const [balance, setBalance] = useState(null)
   const [recipient, setRecipient] = useState('')
@@ -69,4 +69,4 @@ const Metamask = () => {
   )
 }
 
-export default Metamask
+export default Wallet

@@ -20,16 +20,16 @@ const _nav = [
     to: '/trade/Spot',
     icon: <CIcon icon={cilChart} customClassName="nav-icon" />,
   },
-  {
+  /*  {
     component: CNavItem,
     name: 'Price',
     to: '/trade/Price',
     icon: <CIcon icon={cilChart} customClassName="nav-icon" />,
   },
-  {
+*/ {
     component: CNavItem,
-    name: 'Metamask',
-    to: '/metamask',
+    name: 'Wallet',
+    to: '/wallet',
     icon: <CIcon icon={cilWallet} customClassName="nav-icon" />,
   },
 ]

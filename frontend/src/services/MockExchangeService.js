@@ -1,26 +1,19 @@
 class MockExchangeService {
   constructor() {
     this.assets = [
-      'ETH',
-      'BTC',
-      'LINK',
-      'USDT',
-      'XRP',
-      'LTC',
-      'BCH',
-      'DOT',
-      'ADA',
-      'UNI',
-      'WBTC',
-      'AAVE',
-      'BSV',
-      'MATIC',
-      'XLM',
-      'ATOM',
-      'DAI',
-      'MKR',
-      'YFI',
-      'SNX',
+      'ADA/USDT',
+      'BNB/USDT',
+      'BTC/USDT',
+      'CTSI/USDT',
+      'DAI/USDT',
+      'DOGE/USDT',
+      'SOL/USDT',
+      'TON/USDT',
+      'XRP/USDT',
+      'ADA/BTC',
+      'BNB/BTC',
+      'CTSI/BTC',
+      'XRP/BTC',
     ]
     this.orders = {} // An object to hold orders for each asset
     this.transactions = {} // An object to hold transactions for each asset
@@ -29,7 +22,7 @@ class MockExchangeService {
       this.orders[asset] = { bids: [], asks: [] }
       this.transactions[asset] = []
     })
-    this.startMockOrderStream()
+    //this.startMockOrderStream()
   }
 
   // Method to get available assets
@@ -59,6 +52,7 @@ class MockExchangeService {
 
   // Method to get the order book for a particular asset
   getOrderBook(asset) {
+    this.generateMockOrders()
     return this.orders[asset]
   }
 

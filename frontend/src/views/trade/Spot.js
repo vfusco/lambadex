@@ -1,41 +1,50 @@
-import React, { useState } from 'react'
-import { CCard, CCardBody, CCol, CRow } from '@coreui/react'
+import React from 'react'
+import { CCard, CCardHeader, CCardBody, CRow, CCol, CFormSelect } from '@coreui/react'
 import OrderBook from '../../components/OrderBook'
-import { ExchangeProvider } from '../../contexts/ExchangeContext'
-import { exchangeService } from '../../services/MockExchangeService'
+import { ExchangeProvider, useExchange } from '../../contexts/ExchangeContext'
+import { exchangeService } from '../../services/ExchangeService'
 import OrderBookTable from '../../components/OrderBookTable'
 
 const Spot = () => {
-  const [selectedAsset, setSelectedAsset] = useState('ETH') // Default to 'ETH'
+  return (
+    <ExchangeProvider exchangeService={exchangeService}>
+      <SpotInner />
+    </ExchangeProvider>
+  )
+}
+
+const SpotInner = () => {
+  const { assets, selectedSymbol, selectSymbol } = useExchange()
 
   const handleAssetChange = (event) => {
-    setSelectedAsset(event.target.value)
+    selectSymbol(event.target.value)
   }
 
-  const availableAssets = exchangeService.getAvailableAssets()
-
   return (
-    <CRow>
-      <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardBody>
-            <ExchangeProvider exchangeService={exchangeService}>
-              <div className="App">
-                <select onChange={handleAssetChange} value={selectedAsset}>
-                  {availableAssets.map((asset) => (
-                    <option key={asset} value={asset}>
-                      {asset}
-                    </option>
-                  ))}
-                </select>
-                <OrderBook selectedAsset={selectedAsset} />
-                <OrderBookTable selectedAsset={selectedAsset} />
-              </div>
-            </ExchangeProvider>
-          </CCardBody>
-        </CCard>
-      </CCol>
-    </CRow>
+    <>
+      <CCard className="mb-4">
+        <CCardHeader>
+          <CRow>
+            <CCol sm={9}>
+              <h4 id="OrderBook" className="card-title mb-0">
+                Order Book
+              </h4>
+            </CCol>
+            <CCol sm={3} className="d-none d-md-block">
+              <CFormSelect
+                aria-label="Default select example"
+                options={assets}
+                value={selectedSymbol}
+                onChange={handleAssetChange}
+              />
+            </CCol>
+          </CRow>
+        </CCardHeader>
+        <CCardBody>
+          <OrderBook />
+        </CCardBody>
+      </CCard>
+    </>
   )
 }
 
