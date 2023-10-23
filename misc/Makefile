@@ -65,7 +65,7 @@ show-query-output:
 	./lambadex-memory-range.lua decode lambadex-book-report < query-1-report-0.bin
 
 
-run-queries: create-queries fs.ext2
+run-queries: fs.ext2
 	jsonrpc-remote-cartesi-machine \
 		--server-address=localhost:8080 2>&1 &
 	while ! netstat -ntl 2>&1 | grep 8080; do sleep 1; done
@@ -92,7 +92,7 @@ run-queries: create-queries fs.ext2
 		--no-remote-create \
 		--remote-shutdown
 
-run-inputs: create-inputs fs.ext2
+run-inputs: fs.ext2
 	truncate --size 2M lambda.bin
 	jsonrpc-remote-cartesi-machine \
 		--server-address=localhost:8080 2>&1 &
@@ -108,11 +108,11 @@ run-inputs: create-inputs fs.ext2
 		--rollup-advance-state=input:input-%i.bin,input_metadata:input-%i-metadata.bin,input_index_begin:0,input_index_end:6,epoch_index:0,notice_hashes:/dev/null,voucher_hashes:/dev/null,voucher:input-%i-voucher-%o.bin,notice:input-%i-notice-%o.bin,report:input-%i-report-%o.bin \
 		-- /mnt/fs/dapp.emulator --initialize-lambda
 
-run-inputs-host: create-inputs dapp.host
+run-inputs-host: dapp.host
 	truncate --size 2M lambda.bin
 	./dapp.host --image-filename=lambda.bin --initialize-lambda --rollup-input-begin=0 --rollup-input-end=6
 
-run-queries-host: create-queries dapp.host
+run-queries-host: dapp.host
 	./dapp.host --image-filename=lambda.bin --rollup-query-begin=0 --rollup-query-end=2
 
 dapp.emulator: dapp.cpp io-types.h rollup-emulator.hpp
@@ -156,6 +156,13 @@ fs.ext2: dapp.emulator
 	truncate -s %4096 fs.ext2
 
 clean-outputs:
-	\rm *-notice-*.bin
-	\rm *-voucher-*.bin
-	\rm *-report-*.bin
+	\rm -f input-*-notice-*.bin
+	\rm -f input-*-voucher-*.bin
+	\rm -f input-*-report-*.bin
+	\rm -f query-*-notice-*.bin
+	\rm -f query-*-voucher-*.bin
+	\rm -f query-*-report-*.bin
+
+clean-inputs-queries:
+	\rm -f input-*.bin
+	\rm -f query-*.bin

@@ -22,7 +22,7 @@
 #include <variant>
 
 #include "mongoose.h"
-#include <nlohmann/json.hpp>
+#include "nlohmann/json.hpp"
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
