@@ -8,10 +8,9 @@ SENDER_KEY=$5
 
 GAS_LIMIT=10000000
 
-export LUA_PATH_5_4="../misc/?.lua;;"
-ORDER_JSON=$(echo "$ORDER_JSON"  | tr -d '\n' | tr -d ' ')
-payload_bin=$(echo "$ORDER_JSON"  | tr -d '\n' | $MEMORY_RANGE_UTIL encode lambadex-new-order-input | dd bs=64 skip=1 status=none)
-payload_hex=$(echo -n $payload_hex | xxd -p | tr -d '\n' | tr -d ' ')
+export LUA_PATH_5_4="../misc/?.lua;/opt/local/share/luarocks/share/lua/5.4/?.lua;;"
+ORDER_JSON=$(echo "$ORDER_JSON" | tr -d '\n' | tr -d ' ')
+payload_hex=$(echo "$ORDER_JSON" | $MEMORY_RANGE_UTIL encode lambadex-new-order-input |  xxd -p -c 0 -s 64 )
 
 echo "Executing order: $ORDER_JSON"
 cast send $INPUT_BOX_ADDRESS "addInput(address,bytes)" $DAPP_ADDRESS "0x$payload_hex" \

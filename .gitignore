@@ -4,7 +4,7 @@ dapp/dapp
 scripts/node_modules
 scripts/cache
 scripts/out
-scripts/wallet.json
+scripts/wallets.json
 
 # Prerequisites
 *.d

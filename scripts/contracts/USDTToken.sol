@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract USDCToken is ERC20 {
-    constructor(uint256 initialSupply) ERC20("USDC token", "USDC") {
+contract USDTToken is ERC20 {
+    constructor(uint256 initialSupply) ERC20("USDT token", "USDT") {
         _mint(msg.sender, initialSupply * (10 ** uint256(decimals())));
     }
 

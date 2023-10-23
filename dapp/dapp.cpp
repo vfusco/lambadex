@@ -37,7 +37,7 @@ public:
     void *get_data() {
         return m_data;
     }
-    
+
     void *allocate(int length) {
         volatile void *p =  m_data + m_next_free;
         if ((m_next_free + length) > get_data_length()) {
@@ -46,9 +46,9 @@ public:
         m_next_free += length;
         return const_cast<void*>(p);
     }
-    
+
     void deallocate(void *p, int length) {}
-    
+
     uint64_t get_data_length() {
         return m_length - offsetof(memory_arena, m_data);
     }
@@ -138,7 +138,19 @@ class exchange {
 
 public:
     exchange() {
-        instruments[symbol_type{"ctsi/usdt"}] = instrument_type{CTSI_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"ADA/USDT"}] = instrument_type{ADA_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"BNB/USDT"}] = instrument_type{BNB_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"BTC/USDT"}] = instrument_type{BTC_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"CTSI/USDT"}] = instrument_type{CTSI_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"DAI/USDT"}] = instrument_type{DAI_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"DOGE/USDT"}] = instrument_type{DOGE_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"SOL/USDT"}] = instrument_type{SOL_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"TON/USDT"}] = instrument_type{TON_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"XRP/USDT"}] = instrument_type{XRP_ADDRESS, USDT_ADDRESS};
+        instruments[symbol_type{"ADA/BTC"}] = instrument_type{ADA_ADDRESS, BTC_ADDRESS };
+        instruments[symbol_type{"BNB/BTC"}] = instrument_type{BNB_ADDRESS, BTC_ADDRESS };
+        instruments[symbol_type{"CTSI/BTC"}] = instrument_type{CTSI_ADDRESS, BTC_ADDRESS };
+        instruments[symbol_type{"XRP/BTC"}] = instrument_type{XRP_ADDRESS, BTC_ADDRESS };
     }
 
     bool new_order(order_type o, execution_notices_type &reports) {
@@ -301,7 +313,7 @@ private:
 };
 
 } // namespace perna
- 
+
 struct rollup_state_type;
 struct lambda_type;
 static bool inspect_state(rollup_state_type *rollup_state, lambda_type *state, const query_type &query,
